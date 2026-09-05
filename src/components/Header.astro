@@ -1,0 +1,50 @@
+---
+const navItems = [
+  { href: "/", label: "Accueil" },
+  { href: "/comparatif", label: "Comparatif d'outils" },
+  { href: "/architecture", label: "Architecture" },
+  { href: "/souverainete", label: "Souveraineté" },
+  { href: "/a-propos", label: "À propos" },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<header class="border-b border-slate-light">
+  <div
+    class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5"
+  >
+    <a
+      href="/"
+      class="whitespace-nowrap text-sm font-semibold tracking-tight text-ink"
+    >
+      audit-hq<span class="text-accent">.dev</span>
+    </a>
+    <nav aria-label="Navigation principale">
+      <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+        {
+          navItems.map((item) => {
+            const isActive =
+              item.href === "/"
+                ? currentPath === "/"
+                : currentPath.startsWith(item.href);
+            return (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  class:list={[
+                    "transition-colors hover:text-accent",
+                    isActive ? "text-accent font-medium" : "text-slate",
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            );
+          })
+        }
+      </ul>
+    </nav>
+  </div>
+</header>

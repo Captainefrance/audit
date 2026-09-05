@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+/* Geist Sans, self-hosted via @fontsource — no external CDN */
+@import "@fontsource/geist-sans/400.css";
+@import "@fontsource/geist-sans/500.css";
+@import "@fontsource/geist-sans/600.css";
+@import "@fontsource/geist-sans/700.css";
+
+/*
+ * Design system — audit-hq.dev
+ * Palette sobre : noir/blanc + gris ardoise (neutre) + bleu acier (accent).
+ * Voir README.md > "Design system" pour le détail des choix.
+ */
+@theme {
+  --font-sans: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #0a0a0a;
+  --color-paper: #fafafa;
+  --color-slate: #4b5563;
+  --color-slate-light: #e5e7eb;
+  --color-accent: #1d4e89;
+  --color-accent-soft: #dce8f5;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/*
+ * Utilitaire "reveal on scroll" en CSS natif (scroll-driven animations).
+ * Pas de JS : animation-timeline: view() anime l'élément selon sa position
+ * dans le viewport. Dégradation propre si non supporté ou reduced-motion.
+ */
+.reveal-on-scroll {
+  animation: reveal-on-scroll linear both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 30%;
+}
+
+@keyframes reveal-on-scroll {
+  from {
+    opacity: 0;
+    translate: 0 2rem;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-on-scroll {
+    animation: none;
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@supports not (animation-timeline: view()) {
+  .reveal-on-scroll {
+    animation: none;
+    opacity: 1;
+    translate: 0 0;
+  }
+}
