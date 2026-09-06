@@ -75,6 +75,70 @@ const etapes = [
   },
 ];
 
+const stats = [
+  { valeur: "128", label: "alertes traitées / jour (fictif)" },
+  { valeur: "4.2 min", label: "délai moyen de détection (fictif)" },
+  { valeur: "99.9 %", label: "disponibilité plateforme (fictif)" },
+  { valeur: "12", label: "intégrations tierces (fictif)" },
+];
+
+const avantages = [
+  "Déploiement fictif en moins d'une journée",
+  "Corrélation multi-sources sans connecteur additionnel",
+  "Support fictif disponible 24/7",
+];
+
+const vigilance = [
+  "Courbe d'apprentissage initiale sur la console",
+  "Coût de licence fictif élevé au-delà de 500 postes",
+  "Dépendance à un agent local sur chaque poste",
+];
+
+const glossaire = [
+  {
+    terme: "PAM",
+    definition:
+      "Privileged Access Management — gestion et rotation des comptes à hauts privilèges.",
+  },
+  {
+    terme: "EDR",
+    definition:
+      "Endpoint Detection & Response — détection comportementale et réponse sur les postes.",
+  },
+  {
+    terme: "SIEM",
+    definition:
+      "Security Information and Event Management — centralisation et corrélation des journaux.",
+  },
+];
+
+const motsCles = [
+  "Zero Trust",
+  "MFA",
+  "Segmentation",
+  "Threat Hunting",
+  "Chiffrement",
+  "Conformité",
+];
+
+const faq = [
+  {
+    question: "Le déploiement nécessite-t-il un agent sur chaque poste ?",
+    reponse:
+      "Oui, un agent léger fictif est requis pour la télémétrie temps réel. Une version sans agent est en cours d'évaluation dans cette démonstration.",
+  },
+  {
+    question: "Les données restent-elles hébergées en France ?",
+    reponse:
+      "Dans cette démonstration, l'hébergement est configurable : France, UE, ou hors UE selon le fournisseur choisi.",
+  },
+  {
+    question: "Existe-t-il une API pour l'intégration à un SIEM existant ?",
+    reponse:
+      "Oui, une API REST fictive permet d'exporter les événements vers un SIEM tiers au format standard.",
+  },
+];
+
 const yamlSnippet = `rule:
   name: acces-privilegie-hors-plage
   severite: haute
@@ -286,7 +350,146 @@ const yamlSnippet = `rule:
       </div>
     </section>
 
-    {/* 10. Footer de section */}
+    {/* 11. Chiffres clés */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        En chiffres (données fictives)
+      </h2>
+      <div class="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
+        {
+          stats.map((stat) => (
+            <div class="rounded-lg border border-slate-light p-6 text-center">
+              <p class="text-3xl font-semibold tracking-tight text-accent">
+                {stat.valeur}
+              </p>
+              <p class="mt-2 text-sm text-slate">{stat.label}</p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* 12. Bandeaux d'information */}
+    <section class="reveal-on-scroll space-y-4">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Bandeaux d'information
+      </h2>
+      <div class="rounded-lg border-l-4 border-accent bg-accent-soft px-5 py-4">
+        <p class="text-sm font-medium text-accent">Info</p>
+        <p class="mt-1 text-sm text-ink">
+          Exemple de bandeau informatif — utile pour signaler un point
+          d'attention sans bloquer la lecture (contenu fictif).
+        </p>
+      </div>
+      <div class="rounded-lg border-l-4 border-ink bg-paper px-5 py-4">
+        <p class="text-sm font-medium text-ink">Important</p>
+        <p class="mt-1 text-sm text-slate">
+          Exemple de bandeau à fort contraste — pour un avertissement qui doit
+          davantage attirer l'œil (contenu fictif).
+        </p>
+      </div>
+    </section>
+
+    {/* 13. Colonnes avantages / points de vigilance */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Avantages &amp; points de vigilance (fictifs)
+      </h2>
+      <div class="mt-6 grid gap-6 sm:grid-cols-2">
+        <div>
+          <p class="text-sm font-medium text-accent">Avantages</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate">
+            {
+              avantages.map((item) => (
+                <li class="flex gap-2">
+                  <span class="text-accent" aria-hidden="true">
+                    +
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-ink">Points de vigilance</p>
+          <ul class="mt-3 space-y-2 text-sm text-slate">
+            {
+              vigilance.map((item) => (
+                <li class="flex gap-2">
+                  <span class="text-ink" aria-hidden="true">
+                    –
+                  </span>
+                  <span>{item}</span>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    {/* 14. Glossaire */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Glossaire (extrait)
+      </h2>
+      <dl class="mt-6 divide-y divide-slate-light border-y border-slate-light">
+        {
+          glossaire.map((entree) => (
+            <div class="grid gap-1 py-4 sm:grid-cols-4 sm:gap-4">
+              <dt class="font-medium text-ink">{entree.terme}</dt>
+              <dd class="text-sm text-slate sm:col-span-3">
+                {entree.definition}
+              </dd>
+            </div>
+          ))
+        }
+      </dl>
+    </section>
+
+    {/* 15. Mots-clés */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Mots-clés associés
+      </h2>
+      <div class="mt-6 flex flex-wrap gap-2">
+        {
+          motsCles.map((mot) => (
+            <span class="rounded-full bg-slate-light px-3 py-1 text-sm text-slate">
+              {mot}
+            </span>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* 16. FAQ */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Questions fréquentes (fictives)
+      </h2>
+      <div class="mt-6 divide-y divide-slate-light border-y border-slate-light">
+        {
+          faq.map((item) => (
+            <details class="group py-4">
+              <summary class="flex cursor-pointer list-none items-center justify-between gap-4 font-medium text-ink">
+                {item.question}
+                <span
+                  class="shrink-0 text-accent transition-transform group-open:rotate-45"
+                  aria-hidden="true"
+                >
+                  +
+                </span>
+              </summary>
+              <p class="mt-3 text-sm text-slate">{item.reponse}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* 17. Footer de section */}
     <section class="reveal-on-scroll border-t border-slate-light pt-8">
       <div class="flex flex-wrap items-center justify-between gap-4 text-sm text-slate">
         <p>Section de test — liens factices ci-dessous.</p>
