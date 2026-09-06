@@ -1,0 +1,313 @@
+---
+// PAGE DE TEST — à supprimer avant mise en prod
+// Objectif : valider le rendu du design system (police, palette, reveal-on-scroll)
+// sur un maximum de types de contenu. Aucune donnée réelle.
+
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Code } from "astro:components";
+
+const tools = [
+  {
+    nom: "Sentinel-X",
+    categorie: "EDR",
+    description:
+      "Détection comportementale sur les postes de travail, avec isolation automatique en cas d'activité suspecte.",
+    note: "4.3/5",
+  },
+  {
+    nom: "VaultGuard",
+    categorie: "PAM",
+    description:
+      "Coffre-fort de comptes à privilèges avec rotation automatique des secrets et enregistrement de sessions.",
+    note: "4.6/5",
+  },
+  {
+    nom: "NetTrace",
+    categorie: "SIEM",
+    description:
+      "Corrélation d'événements réseau multi-sources, avec tableaux de bord de détection d'anomalies.",
+    note: "3.9/5",
+  },
+];
+
+const comparatif = [
+  {
+    critere: "Détection d'anomalies",
+    solutionA: "Oui",
+    solutionB: "Partielle",
+  },
+  {
+    critere: "Journalisation centralisée",
+    solutionA: "Oui",
+    solutionB: "Oui",
+  },
+  {
+    critere: "Hébergement",
+    solutionA: "UE (fictif)",
+    solutionB: "Hors UE (fictif)",
+  },
+];
+
+const etapes = [
+  {
+    numero: "01",
+    titre: "Cartographie des actifs",
+    description:
+      "Inventaire fictif de l'existant : postes, serveurs, comptes à privilèges et flux réseau.",
+  },
+  {
+    numero: "02",
+    titre: "Analyse des risques",
+    description:
+      "Priorisation fictive des vulnérabilités identifiées selon leur criticité métier.",
+  },
+  {
+    numero: "03",
+    titre: "Plan de remédiation",
+    description:
+      "Feuille de route fictive avec jalons, responsables et échéances.",
+  },
+  {
+    numero: "04",
+    titre: "Suivi continu",
+    description:
+      "Tableau de bord fictif de suivi des indicateurs après remédiation.",
+  },
+];
+
+const yamlSnippet = `rule:
+  name: acces-privilegie-hors-plage
+  severite: haute
+  source: siem-fictif
+  condition:
+    evenement: connexion_admin
+    horaire: hors_plage_ouvree
+    mfa: absent
+  action:
+    - notifier: equipe-soc
+    - bloquer: compte_temporairement
+  souverain: true`;
+---
+
+<BaseLayout title="Page de démo">
+  <div class="flex flex-col gap-24">
+    {/* 1. Hero pleine largeur */}
+    <section class="reveal-on-scroll">
+      <div
+        class="bg-ink px-6 py-20 text-paper"
+        style="width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);"
+      >
+        <div class="mx-auto max-w-5xl">
+          <p class="text-sm font-medium text-accent-soft">Démo interne</p>
+          <h1
+            class="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl"
+          >
+            Visibilité totale sur votre surface d'attaque
+          </h1>
+          <p class="mt-4 max-w-2xl text-slate-light">
+            Un tableau de bord unique pour corréler vulnérabilités, accès
+            privilégiés et flux réseau, sans multiplier les consoles.
+          </p>
+          <a
+            href="#"
+            class="mt-8 inline-block rounded-md bg-accent px-5 py-2.5 text-sm font-medium text-paper transition-colors hover:opacity-90"
+          >
+            Demander une démo
+          </a>
+        </div>
+      </div>
+    </section>
+
+    {/* 2. Bloc de texte long */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Le mythe du périmètre
+      </h2>
+      <div class="mt-4 max-w-3xl space-y-4 text-slate">
+        <p>
+          Pendant longtemps, la sécurité des systèmes d'information s'est
+          organisée autour d'un principe simple : protéger le périmètre pour
+          protéger l'intérieur. Pare-feu en bordure de réseau, VPN pour les
+          accès distants, zone démilitarisée pour les services exposés — le
+          modèle tenait tant que l'essentiel du trafic restait interne et
+          prévisible.
+        </p>
+        <p>
+          Ce modèle fictif de référence, qu'on appellera ici « Architecture
+          Concentrique v1 », supposait qu'un attaquant devait franchir une
+          frontière nette avant d'atteindre une ressource sensible. Dans les
+          faits, la multiplication des accès tiers, des postes personnels et
+          des services en dehors du réseau interne a rendu cette frontière de
+          plus en plus poreuse, jusqu'à la rendre largement théorique.
+        </p>
+        <p>
+          L'enjeu n'est donc plus seulement de filtrer ce qui entre, mais de
+          vérifier en continu qui accède à quoi, depuis où, et avec quel
+          niveau de confiance. C'est ce déplacement — du périmètre vers
+          l'identité et le contexte — qui structure la suite de cette
+          démonstration de mise en page.
+        </p>
+      </div>
+    </section>
+
+    {/* 3. Grille de cartes outil */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Aperçu du futur comparatif
+      </h2>
+      <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {
+          tools.map((tool) => (
+            <div class="rounded-lg border border-slate-light p-6">
+              <div class="flex items-start justify-between gap-3">
+                <h3 class="font-semibold text-ink">{tool.nom}</h3>
+                <span class="whitespace-nowrap rounded-full bg-accent-soft px-2.5 py-0.5 text-xs font-medium text-accent">
+                  {tool.categorie}
+                </span>
+              </div>
+              <p class="mt-3 text-sm text-slate">{tool.description}</p>
+              <p class="mt-4 text-sm font-medium text-ink">
+                Note fictive : {tool.note}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* 4. Image placeholder */}
+    <section class="reveal-on-scroll">
+      <figure>
+        <img
+          src="https://picsum.photos/seed/audit-hq-demo/1200/600"
+          alt="Image placeholder — aucune image réelle, illustration de test"
+          width="1200"
+          height="600"
+          loading="lazy"
+          class="w-full rounded-lg border border-slate-light object-cover"
+        />
+        <figcaption class="mt-2 text-sm text-slate">
+          Illustration — vue schématique d'une architecture de collecte de
+          logs (placeholder, image de test).
+        </figcaption>
+      </figure>
+    </section>
+
+    {/* 5. Tableau comparatif */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Comparatif rapide (données fictives)
+      </h2>
+      <div class="mt-6 overflow-x-auto rounded-lg border border-slate-light">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-light bg-paper">
+              <th class="px-4 py-3 font-medium text-ink">Critère</th>
+              <th class="px-4 py-3 font-medium text-ink">
+                Solution A (fictive)
+              </th>
+              <th class="px-4 py-3 font-medium text-ink">
+                Solution B (fictive)
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              comparatif.map((ligne, i) => (
+                <tr class={i < comparatif.length - 1 ? "border-b border-slate-light" : ""}>
+                  <td class="px-4 py-3 text-slate">{ligne.critere}</td>
+                  <td class="px-4 py-3 text-slate">{ligne.solutionA}</td>
+                  <td class="px-4 py-3 text-slate">{ligne.solutionB}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    {/* 6. Citation / callout */}
+    <section class="reveal-on-scroll">
+      <blockquote class="border-l-4 border-accent bg-accent-soft px-6 py-5">
+        <p class="text-lg text-ink">
+          « La meilleure défense n'est pas l'absence de faille, c'est la
+          vitesse de détection. »
+        </p>
+        <cite class="mt-3 block text-sm not-italic text-slate">
+          — RSSI fictif, retour d'expérience interne
+        </cite>
+      </blockquote>
+    </section>
+
+    {/* 7. Bloc de code */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Exemple de règle de détection (extrait fictif)
+      </h2>
+      <div class="mt-6 overflow-x-auto rounded-lg border border-slate-light [&_pre]:p-4 [&_pre]:text-sm">
+        <Code code={yamlSnippet} lang="yaml" theme="github-dark" />
+      </div>
+    </section>
+
+    {/* 8. Frise verticale */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Méthodologie (aperçu)
+      </h2>
+      <ol class="mt-6 space-y-8 border-l border-slate-light pl-6">
+        {
+          etapes.map((etape) => (
+            <li class="relative">
+              <span class="absolute -left-[1.95rem] flex h-3 w-3 -translate-y-1 items-center justify-center rounded-full bg-accent" />
+              <p class="text-sm font-medium text-accent">{etape.numero}</p>
+              <h3 class="mt-1 font-semibold text-ink">{etape.titre}</h3>
+              <p class="mt-1 text-sm text-slate">{etape.description}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    {/* 9. Badges de statut */}
+    <section class="reveal-on-scroll">
+      <h2 class="text-2xl font-semibold tracking-tight text-ink">
+        Badges de statut
+      </h2>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <span class="rounded-full bg-accent-soft px-3 py-1 text-sm font-medium text-accent">
+          Recommandé
+        </span>
+        <span class="rounded-full bg-ink px-3 py-1 text-sm font-medium text-paper">
+          À éviter
+        </span>
+        <span class="rounded-full bg-slate-light px-3 py-1 text-sm font-medium text-slate">
+          Neutre
+        </span>
+      </div>
+    </section>
+
+    {/* 10. Footer de section */}
+    <section class="reveal-on-scroll border-t border-slate-light pt-8">
+      <div class="flex flex-wrap items-center justify-between gap-4 text-sm text-slate">
+        <p>Section de test — liens factices ci-dessous.</p>
+        <ul class="flex flex-wrap gap-x-6 gap-y-2">
+          <li>
+            <a href="#" class="transition-colors hover:text-accent">
+              Documentation interne (placeholder)
+            </a>
+          </li>
+          <li>
+            <a href="#" class="transition-colors hover:text-accent">
+              Ressources
+            </a>
+          </li>
+          <li>
+            <a href="#" class="transition-colors hover:text-accent">
+              Contact fictif
+            </a>
+          </li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</BaseLayout>
