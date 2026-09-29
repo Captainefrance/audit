@@ -7,7 +7,6 @@ const navItems = [
   { href: "/a-propos", label: "À propos" },
   // TODO: entrée de test — à retirer avant mise en prod (voir src/pages/demo.astro)
   { href: "/demo", label: "Démo (test)" },
-  { href: "/test4", label: "test4" },
 ];
 
 const currentPath = Astro.url.pathname;
@@ -23,6 +22,7 @@ const currentPath = Astro.url.pathname;
     >
       audit-hq<span class="text-accent">.dev</span>
     </a>
+    <span class="text-4xl font-bold text-accent">test4</span>
     <nav aria-label="Navigation principale">
       <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
         {
