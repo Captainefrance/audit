@@ -27,5 +27,7 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    // Pas de script inline (CSP sans 'unsafe-inline' pour les scripts) : toujours un fichier externe.
+    build: { assetsInlineLimit: 0 },
   },
 });
