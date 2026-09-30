@@ -11,6 +11,17 @@ onPageLoad((signal) => {
   const diagram = root?.querySelector<HTMLElement>("[data-diagram]");
   if (!root || !diagram) return;
 
+  // Filet de sécurité CSS : si le script arrive après 2,5 s, le CSS a déjà tout révélé. On ne
+  // re-masque alors rien (ce serait un éclair : couches visibles puis retirées) : le schéma reste
+  // complet, seule la mise en évidence suit le défilement. Mémorisé sur l'élément car `init`
+  // peut être rappelé sur le même DOM (chargement initial puis astro:page-load).
+  const failsafeFired = () =>
+    diagram
+      .getAnimations({ subtree: true })
+      .some((a) => a instanceof CSSAnimation && a.animationName === "scrolly-failsafe" && a.playState === "finished");
+  if (failsafeFired()) root.dataset.scrollyStatic = "true";
+  const staticReveal = () => root.dataset.scrollyStatic === "true";
+
   const steps = [...root.querySelectorAll<HTMLElement>("[data-step]")];
   const desktop = matchMedia("(min-width: 768px)");
   let frame = 0;
@@ -41,7 +52,7 @@ onPageLoad((signal) => {
       if (step.getBoundingClientRect().top <= line) active = i;
     });
     const layerId = steps[active]?.dataset.layer ?? null;
-    const visibleUpTo = reducedMotion() ? Infinity : active;
+    const visibleUpTo = reducedMotion() || staticReveal() ? Infinity : active;
     revealUpTo(diagram, visibleUpTo);
     highlightLayer(diagram, layerId);
     setActiveStep(active);
