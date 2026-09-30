@@ -1,14 +1,31 @@
 ---
+import { render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import ArchitectureDiagram from "../../../components/ArchitectureDiagram.astro";
+import LayerCard from "../../../components/LayerCard.astro";
 import ToolCard from "../../../components/ToolCard.astro";
 import { getLangStaticPaths, t, type Lang } from "../../../i18n";
-import { resolveArchitecture } from "../../../lib/architecture";
+import { getLayerPanels, resolveGraph } from "../../../lib/architecture";
 
 export const getStaticPaths = getLangStaticPaths;
 const lang = Astro.params.lang as Lang;
-const layers = await resolveArchitecture(lang);
+const { layers, links, linkTypes } = await resolveGraph(lang);
 const hasContent = layers.some((l) => l.tools.length > 0);
+
+// Scrollytelling seulement si au moins une couche a un texte ; sinon schéma statique complet.
+const panelEntries = await getLayerPanels(lang);
+const panels = new Map(
+  await Promise.all(
+    layers
+      .filter((l) => panelEntries.has(l.id))
+      .map(async (l) => {
+        const panel = panelEntries.get(l.id)!;
+        const { Content } = await render(panel.entry);
+        return [l.id, { Content, contentLang: panel.contentLang }] as const;
+      }),
+  ),
+);
+const scrolly = hasContent && panels.size > 0;
 ---
 
 {
@@ -18,9 +35,52 @@ const hasContent = layers.some((l) => l.tools.length > 0);
         {t(lang, "architecture.title")}
       </h1>
 
-      <div class="mt-10">
-        <ArchitectureDiagram lang={lang} layers={layers} />
-      </div>
+      {scrolly ? (
+        <div class="mt-10" data-scrolly>
+          <div class="md:grid md:grid-cols-[minmax(0,1fr)_17rem] md:gap-10">
+            <div class="scrolly-sticky hidden md:sticky md:top-6 md:block md:self-start">
+              <ArchitectureDiagram
+                lang={lang}
+                layers={layers}
+                links={links}
+                linkTypes={linkTypes}
+                mode="scrolly"
+              />
+            </div>
+            <ol class="space-y-10 md:space-y-0" aria-label={t(lang, "architecture.steps")}>
+              {layers.map((layer) => {
+                const panel = panels.get(layer.id);
+                return (
+                  <li
+                    data-step
+                    data-layer={layer.id}
+                    class="scrolly-step md:flex md:min-h-[65vh] md:items-center"
+                  >
+                    <div class="reveal-on-scroll md:hidden">
+                      <LayerCard lang={lang} layer={layer} />
+                    </div>
+                    {panel && (
+                      <div
+                        class="scrolly-panel mt-4 max-w-prose md:mt-0"
+                        lang={panel.contentLang !== lang ? panel.contentLang : undefined}
+                      >
+                        <h2 class="text-lg font-semibold tracking-tight text-ink">{layer.name}</h2>
+                        <div class="prose-content mt-3 text-ink">
+                          <panel.Content />
+                        </div>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+      ) : (
+        <div class="mt-10">
+          <ArchitectureDiagram lang={lang} layers={layers} links={links} linkTypes={linkTypes} />
+        </div>
+      )}
 
       <section class="mt-16" aria-labelledby="tool-index">
         <h2 id="tool-index" class="text-2xl font-semibold tracking-tight text-ink">
@@ -65,3 +125,7 @@ const hasContent = layers.some((l) => l.tools.length > 0);
     </BaseLayout>
   )
 }
+
+<script>
+  import "../../../scripts/architecture-scrolly";
+</script>

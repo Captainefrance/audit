@@ -1,16 +1,35 @@
 ---
 import { localePath, t, type Lang } from "../i18n";
-import type { ResolvedLayer } from "../lib/architecture";
+import LayerCard from "./LayerCard.astro";
+import LinkLegend from "./LinkLegend.astro";
+import type { LinkType } from "../data/architecture";
+import type { ResolvedGraph, ResolvedLayer } from "../lib/architecture";
 
 interface Props {
   lang: Lang;
   layers: ResolvedLayer[];
+  links?: ResolvedGraph["links"];
+  linkTypes?: ResolvedGraph["linkTypes"];
+  /**
+   * "static" : schéma complet (SVG ≥ md, liste verticale en dessous).
+   * "scrolly" : SVG seul, piloté par src/scripts/architecture-scrolly.ts (les couches
+   * mobiles sont rendues par la page, avec leur texte).
+   */
+  mode?: "static" | "scrolly";
   /** Couche mise en évidence (fiche outil). */
   highlightLayer?: string;
   /** Outil mis en évidence (fiche outil). */
   highlightTool?: string;
 }
-const { lang, layers, highlightLayer, highlightTool } = Astro.props;
+const {
+  lang,
+  layers,
+  links = [],
+  linkTypes = [],
+  mode = "static",
+  highlightLayer,
+  highlightTool,
+} = Astro.props;
 
 // Géométrie du schéma (unités du viewBox).
 const W = 800;
@@ -22,8 +41,16 @@ const LAYER_GAP = 44; // espace entre couches (contient la flèche)
 const nodeWidth = (name: string, category: string) =>
   Math.min(300, Math.max(130, Math.max(name.length * 8.4, category.length * 6.6) + 32));
 
+interface PlacedNode {
+  tool: ResolvedLayer["tools"][number];
+  x: number;
+  y: number;
+  w: number;
+  layerIndex: number;
+}
+
 let y = 0;
-const placed = layers.map((layer) => {
+const placed = layers.map((layer, layerIndex) => {
   const rows: { tool: ResolvedLayer["tools"][number]; w: number }[][] = [[]];
   let rowW = 0;
   for (const tool of layer.tools) {
@@ -40,22 +67,53 @@ const placed = layers.map((layer) => {
   const height = PAD + LABEL_H + rowCount * NODE_H + Math.max(0, rowCount - 1) * NODE_GAP + PAD;
   const top = y;
   y += height + LAYER_GAP;
-  const nodes = rows.flatMap((row, r) => {
+  const nodes: PlacedNode[] = rows.flatMap((row, r) => {
     const total = row.reduce((s, n) => s + n.w, 0) + (row.length - 1) * NODE_GAP;
     let x = (W - total) / 2;
     return row.map(({ tool, w }) => {
-      const node = { tool, x, y: top + PAD + LABEL_H + r * (NODE_H + NODE_GAP), w };
+      const node = { tool, x, y: top + PAD + LABEL_H + r * (NODE_H + NODE_GAP), w, layerIndex };
       x += w + NODE_GAP;
       return node;
     });
   });
-  return { layer, top, height, nodes };
+  return { layer, top, height, nodes, layerIndex };
 });
 const H = Math.max(0, y - LAYER_GAP);
 const label = t(lang, "architecture.diagram.label");
+
+// Liens : courbes entre nœuds, sous les nœuds. Sans liens déclarés, flèches entre couches.
+const byId = new Map(placed.flatMap((p) => p.nodes).map((n) => [n.tool.id, n]));
+const edgePath = (a: PlacedNode, b: PlacedNode) => {
+  if (a.layerIndex === b.layerIndex && a.y === b.y) {
+    const rightward = a.x < b.x;
+    const x1 = rightward ? a.x + a.w : a.x;
+    const x2 = rightward ? b.x - 3 : b.x + b.w + 3;
+    const cy = a.y + NODE_H / 2;
+    return `M${x1} ${cy} L${x2} ${cy}`;
+  }
+  const down = b.y > a.y;
+  const x1 = a.x + a.w / 2;
+  const y1 = down ? a.y + NODE_H : a.y;
+  const x2 = b.x + b.w / 2;
+  const y2 = down ? b.y - 4 : b.y + NODE_H + 4;
+  const my = (y1 + y2) / 2;
+  return `M${x1} ${y1} C${x1} ${my}, ${x2} ${my}, ${x2} ${y2}`;
+};
+const edges = links
+  .map((l) => ({ ...l, a: byId.get(l.from), b: byId.get(l.to) }))
+  .filter((e): e is typeof e & { a: PlacedNode; b: PlacedNode } => Boolean(e.a && e.b))
+  .map((e) => ({
+    from: e.from,
+    to: e.to,
+    type: e.type,
+    d: edgePath(e.a, e.b),
+    revealIndex: Math.max(e.a.layerIndex, e.b.layerIndex),
+  }));
+const usedTypes = [...new Set(edges.map((e) => e.type))] as LinkType[];
+const typesForLegend = linkTypes.length > 0 ? linkTypes : [];
 ---
 
-<div class="architecture-diagram reveal-on-scroll">
+<div class:list={["architecture-diagram", mode === "static" && "reveal-on-scroll"]} data-diagram data-mode={mode}>
   <!-- ≥ md : schéma SVG -->
   <svg
     class="hidden h-auto w-full md:block"
@@ -70,12 +128,20 @@ const label = t(lang, "architecture.diagram.label");
       <marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
         <path d="M0 0 L10 5 L0 10 z" fill="var(--diagram-link)"></path>
       </marker>
+      {
+        usedTypes.map((type) => (
+          <marker id={`arch-arrow-${type}`} class={`marker-${type}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+            <path d="M0 0 L10 5 L0 10 z"></path>
+          </marker>
+        ))
+      }
     </defs>
 
     {
-      placed.map(({ layer, top, height }, i) => (
-        <g>
+      placed.map(({ layer, top, height, layerIndex }, i) => (
+        <g data-layer={layer.id} data-layer-index={layerIndex} data-reveal-index={layerIndex}>
           <rect
+            class="layer-rect"
             x="1"
             y={top}
             width={W - 2}
@@ -86,6 +152,7 @@ const label = t(lang, "architecture.diagram.label");
             stroke-width={layer.id === highlightLayer ? 2.5 : 1.5}
           ></rect>
           <text
+            class="layer-label"
             x={PAD + 4}
             y={top + PAD + 6}
             font-size="13"
@@ -94,8 +161,9 @@ const label = t(lang, "architecture.diagram.label");
           >
             {layer.name}
           </text>
-          {i < placed.length - 1 && (
+          {links.length === 0 && i < placed.length - 1 && (
             <line
+              data-reveal-index={layerIndex + 1}
               x1={W / 2}
               y1={top + height + 4}
               x2={W / 2}
@@ -110,8 +178,23 @@ const label = t(lang, "architecture.diagram.label");
     }
 
     {
+      edges.map((e) => (
+        <path
+          class={`link-line link-${e.type}`}
+          d={e.d}
+          data-link
+          data-from={e.from}
+          data-to={e.to}
+          data-type={e.type}
+          data-reveal-index={e.revealIndex}
+          marker-end={`url(#arch-arrow-${e.type})`}
+        ></path>
+      ))
+    }
+
+    {
       placed.flatMap(({ nodes }) =>
-        nodes.map(({ tool, x, y: ny, w }) => {
+        nodes.map(({ tool, x, y: ny, w, layerIndex }) => {
           const current = tool.id === highlightTool;
           const body = (
             <>
@@ -130,7 +213,7 @@ const label = t(lang, "architecture.diagram.label");
                 {tool.name}
               </text>
               <text x={x + w / 2} y={ny + 38} text-anchor="middle" font-size="11" fill="var(--diagram-text-muted)">
-                {tool.category}
+                {" "}{tool.category}
               </text>
             </>
           );
@@ -138,13 +221,20 @@ const label = t(lang, "architecture.diagram.label");
             <a
               class="node node-link"
               href={localePath(lang, tool.href)}
-              aria-label={`${tool.name} — ${tool.category}`}
+              data-node={tool.id}
+              data-reveal-index={layerIndex}
               aria-current={current ? "page" : undefined}
             >
               {body}
             </a>
           ) : (
-            <g class="node" aria-label={`${tool.name} — ${tool.category}`} role="img">
+            <g
+              class="node"
+              data-node={tool.id}
+              data-reveal-index={layerIndex}
+              aria-label={`${tool.name} — ${tool.category}`}
+              role="img"
+            >
               {body}
             </g>
           );
@@ -153,52 +243,22 @@ const label = t(lang, "architecture.diagram.label");
     }
   </svg>
 
-  <!-- < md : liste verticale -->
-  <ol class="space-y-4 md:hidden" aria-label={label}>
-    {
-      layers.map((layer) => (
-        <li
-          class:list={[
-            "rounded-lg border-2 p-4",
-            layer.id === highlightLayer ? "border-accent" : "border-slate-light",
-          ]}
-          aria-current={layer.id === highlightLayer ? "true" : undefined}
-        >
-          <p class:list={["text-sm font-semibold", layer.id === highlightLayer ? "text-accent" : "text-slate"]}>
-            {layer.name}
-          </p>
-          <ul class="mt-3 space-y-2">
-            {layer.tools.map((tool) => {
-              const current = tool.id === highlightTool;
-              const cls = [
-                "block rounded-lg bg-accent-soft px-3 py-2 text-sm",
-                current ? "outline-2 outline-accent" : "",
-              ];
-              return (
-                <li>
-                  {tool.href ? (
-                    <a
-                      href={localePath(lang, tool.href)}
-                      aria-current={current ? "page" : undefined}
-                      class:list={[...cls, "transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"]}
-                    >
-                      <span class="font-semibold">{tool.name}</span>
-                      <span class="block text-xs text-slate">{tool.category}</span>
-                    </a>
-                  ) : (
-                    <span class:list={cls}>
-                      <span class="font-semibold">{tool.name}</span>
-                      <span class="block text-xs text-slate">{tool.category}</span>
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </li>
-      ))
-    }
-  </ol>
+  <div class="hidden md:block">
+    <LinkLegend lang={lang} linkTypes={typesForLegend} />
+  </div>
+
+  <!-- < md : liste verticale (mode static ; en scrolly, la page rend les couches avec leur texte) -->
+  {
+    mode === "static" && (
+      <ol class="space-y-4 md:hidden" aria-label={label}>
+        {layers.map((layer) => (
+          <li>
+            <LayerCard lang={lang} layer={layer} highlightLayer={highlightLayer} highlightTool={highlightTool} />
+          </li>
+        ))}
+      </ol>
+    )
+  }
 </div>
 
 <style>

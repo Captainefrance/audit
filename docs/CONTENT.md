@@ -60,6 +60,33 @@ Si `hasPage: true` mais qu'aucune fiche publiée n'existe, l'outil s'affiche san
 
 Tant qu'aucune couche n'est publiée, `/fr/architecture/` affiche l'ancienne page « à venir ».
 
+## Liens, dépendances et texte des couches (page Architecture)
+
+Dans `src/data/architecture.ts` :
+
+- **Lien** entre deux outils : ajouter `{ from: "<id>", to: "<id>", type: "flux" }` dans `links`.
+  Types : `flux`, `authentification`, `sauvegarde`, `supervision`, `administration`. Chaque type a un motif de tirets et une couleur ;
+  la légende du schéma est générée depuis les types réellement utilisés.
+  Libellés FR/EN des types : `linkTypeLabels` (même fichier). Nouveau type : l'ajouter à `LinkType`, `linkTypeLabels`, `linkTypeOrder`
+  et définir son style `.link-<type>` dans `src/styles/global.css`.
+- **Dépendance** : `dependsOn: ["<id>", ...]` sur un outil. Ce n'est pas un lien dessiné : c'est ce qui doit fonctionner pour que l'outil
+  fonctionne (utilisé plus tard pour la panne en cascade et les scénarios). Les cycles et les ids inconnus font échouer le build.
+- **Texte d'une couche** affiché au défilement : `src/content/layers/fr/<id de la couche>.md` (et `en/`).
+
+  ```yaml
+  ---
+  translationKey: <id de la couche>   # identique au nom du fichier
+  draft: false
+  ---
+  ```
+
+  Le corps Markdown est le texte du panneau. Corps vide ou fichier absent : pas de panneau pour cette couche.
+  Si aucune couche n'a de texte, la page affiche le schéma complet, sans effet au défilement.
+  Sans version EN, le texte FR est repris (balisé `lang="fr"`).
+
+Sous 768 px, le schéma sticky est remplacé par des couches empilées (avec leur texte) ; avec `prefers-reduced-motion`,
+toutes les couches restent visibles et seule la mise en évidence suit le défilement.
+
 ## Pages hors navigation
 
 `/comparatif`, `/souverainete` et `/demo` restent dans le repo, sans lien de menu, en `noindex`, hors sitemap.

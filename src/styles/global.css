@@ -205,3 +205,90 @@ body {
     transform: none;
   }
 }
+
+/*
+ * Types de liens du schéma : couleur ET motif de tirets (jamais la couleur seule).
+ * Les libellés viennent de src/data/architecture.ts ; la légende est générée depuis les types utilisés.
+ */
+:root {
+  --diagram-link-flux: var(--color-accent);
+  --diagram-link-authentification: #0f766e;
+  --diagram-link-sauvegarde: #b45309;
+  --diagram-link-supervision: var(--color-slate);
+  --diagram-link-administration: var(--color-ink);
+}
+.link-line {
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+}
+.link-flux { stroke: var(--diagram-link-flux); }
+.link-authentification { stroke: var(--diagram-link-authentification); stroke-dasharray: 7 4; }
+.link-sauvegarde { stroke: var(--diagram-link-sauvegarde); stroke-dasharray: 1 5; stroke-width: 2.25; }
+.link-supervision { stroke: var(--diagram-link-supervision); stroke-dasharray: 9 3 2 3; }
+.link-administration { stroke: var(--diagram-link-administration); stroke-dasharray: 14 5; }
+.marker-flux path { fill: var(--diagram-link-flux); }
+.marker-authentification path { fill: var(--diagram-link-authentification); }
+.marker-sauvegarde path { fill: var(--diagram-link-sauvegarde); }
+.marker-supervision path { fill: var(--diagram-link-supervision); }
+.marker-administration path { fill: var(--diagram-link-administration); }
+
+/*
+ * États du schéma (voir src/lib/diagram-state.ts) : `data-state` hidden | active | dim | down.
+ * Absent = visible. Un élément masqué est aussi retiré du focus clavier (visibility).
+ */
+[data-diagram] [data-reveal-index] {
+  transition: opacity 0.45s ease;
+}
+[data-diagram] [data-reveal-index][data-state="hidden"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.45s ease,
+    visibility 0s linear 0.45s;
+}
+[data-diagram] [data-layer][data-state="active"] .layer-rect {
+  stroke: var(--diagram-highlight);
+  stroke-width: 2.5;
+}
+[data-diagram] [data-layer][data-state="active"] .layer-label {
+  fill: var(--diagram-highlight);
+}
+
+/* Scrollytelling : le schéma tient dans l'écran, le texte de la couche active est mis en avant. */
+[data-scrolly] [data-diagram][data-mode="scrolly"] svg {
+  max-height: calc(100vh - 7rem);
+}
+.scrolly-panel {
+  transition: opacity 0.3s ease;
+}
+[data-scrolly][data-scrolly-ready] .scrolly-step:not([aria-current]) .scrolly-panel {
+  opacity: 0.6;
+}
+
+/*
+ * Avant que le JS n'active le scrollytelling : couches masquées (pas d'éclair de contenu).
+ * Uniquement si le JS est actif et le mouvement autorisé ; sans JS tout reste visible.
+ * Filet de sécurité 100 % CSS : si le script ne démarre pas, tout réapparaît après 2,5 s.
+ */
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  [data-scrolly]:not([data-scrolly-ready]) [data-diagram] [data-reveal-index] {
+    opacity: 0;
+    visibility: hidden;
+    animation: scrolly-failsafe 0s linear 2.5s forwards;
+  }
+}
+@keyframes scrolly-failsafe {
+  to {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-diagram] [data-reveal-index],
+  [data-diagram] [data-reveal-index][data-state="hidden"],
+  .scrolly-panel {
+    transition: none;
+  }
+}

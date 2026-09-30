@@ -1,0 +1,31 @@
+---
+import { t, type Lang } from "../i18n";
+import type { LinkType } from "../data/architecture";
+
+interface Props {
+  lang: Lang;
+  /** Types réellement utilisés dans le schéma (générés depuis les données). */
+  linkTypes: { type: LinkType; label: string }[];
+}
+const { lang, linkTypes } = Astro.props;
+---
+
+{
+  linkTypes.length > 0 && (
+    <div class="link-legend mt-6">
+      <p class="text-sm text-slate" id="link-legend-title">
+        {t(lang, "architecture.legend")}
+      </p>
+      <ul class="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-sm text-ink" aria-labelledby="link-legend-title">
+        {linkTypes.map(({ type, label }) => (
+          <li class="flex items-center gap-2">
+            <svg width="36" height="10" viewBox="0 0 36 10" aria-hidden="true" focusable="false">
+              <line class={`link-line link-${type}`} x1="1" y1="5" x2="35" y2="5"></line>
+            </svg>
+            {label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
