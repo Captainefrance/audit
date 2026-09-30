@@ -35,3 +35,17 @@ export function splitLocale(pathname: string): { lang: Lang | null; rest: string
 export function getLangStaticPaths() {
   return locales.map((lang) => ({ params: { lang } }));
 }
+
+/** Substitue {clé} dans un texte d'interface. */
+export function format(text: string, values: Record<string, string | number>): string {
+  return text.replace(/\{(\w+)\}/g, (_, k) => String(values[k] ?? ""));
+}
+
+const dateLocales: Record<Lang, string> = { fr: "fr-CA", en: "en-CA" };
+
+export function formatDate(lang: Lang, date: Date): string {
+  return new Intl.DateTimeFormat(dateLocales[lang], {
+    dateStyle: "long",
+    timeZone: "UTC",
+  }).format(date);
+}

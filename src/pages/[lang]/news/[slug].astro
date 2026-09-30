@@ -1,0 +1,67 @@
+---
+import { render } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { formatDate, getLangStaticPaths, localePath, locales, t, type Lang } from "../../../i18n";
+import { getNewsEntries, localize, translationInfo } from "../../../lib/collections";
+
+export async function getStaticPaths() {
+  const entries = await getNewsEntries();
+  return getLangStaticPaths().flatMap(({ params }) =>
+    localize(entries, params.lang).map((item) => ({
+      params: { lang: params.lang, slug: item.slug },
+      props: { item },
+    })),
+  );
+}
+
+const lang = Astro.params.lang as Lang;
+const { item } = Astro.props;
+const { entry } = item;
+const { Content } = await render(entry);
+
+const { slugs, translated } = translationInfo(await getNewsEntries(), entry.data.translationKey);
+const pathByLang = Object.fromEntries(locales.map((l) => [l, `/news/${slugs[l]}/`]));
+---
+
+<BaseLayout
+  title={entry.data.title}
+  lang={lang}
+  path={`/news/${item.slug}/`}
+  pathByLang={pathByLang}
+  translations={translated}
+>
+  <article>
+    <a href={localePath(lang, "/news")} class="text-sm text-slate transition-colors hover:text-accent">
+      ← {t(lang, "news.back")}
+    </a>
+    <header class="mt-6">
+      <p class="text-sm text-slate">
+        {t(lang, "news.published")}
+        <time datetime={entry.data.date.toISOString().slice(0, 10)}>{formatDate(lang, entry.data.date)}</time>
+      </p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        {entry.data.title}
+      </h1>
+      <p class="mt-4 text-sm text-slate">
+        {t(lang, "news.source")} :
+        <a
+          href={entry.data.source.url}
+          rel="noopener noreferrer"
+          class="text-accent underline underline-offset-2"
+        >{entry.data.source.name}</a>
+      </p>
+      {
+        entry.data.tags.length > 0 && (
+          <ul class="mt-4 flex flex-wrap gap-2 text-xs" aria-label={t(lang, "news.tags")}>
+            {entry.data.tags.map((tag) => (
+              <li class="rounded-full border border-slate-light px-2 py-0.5 text-slate">{tag}</li>
+            ))}
+          </ul>
+        )
+      }
+    </header>
+    <div class="prose-content mt-8 max-w-2xl text-ink">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

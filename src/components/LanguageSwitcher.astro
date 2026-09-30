@@ -3,10 +3,10 @@ import { locales, localePath, t, type Lang } from "../i18n";
 
 interface Props {
   lang: Lang;
-  /** Chemin sans locale de la page courante. */
-  path: string;
+  /** Chemin sans locale de la page courante, dans chaque langue. */
+  paths: Record<Lang, string>;
 }
-const { lang, path } = Astro.props;
+const { lang, paths } = Astro.props;
 ---
 
 <nav aria-label={t(lang, "lang.label")} class="text-sm">
@@ -15,7 +15,7 @@ const { lang, path } = Astro.props;
       locales.map((l) => (
         <li>
           <a
-            href={localePath(l, path)}
+            href={localePath(l, paths[l])}
             hreflang={l}
             lang={l}
             title={t(l, `lang.${l}.full`)}

@@ -1,0 +1,43 @@
+---
+import { formatDate, localePath, t, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+  slug: string;
+  title: string;
+  date: Date;
+  sourceName: string;
+  tags: string[];
+  draft?: boolean;
+}
+const { lang, slug, title, date, sourceName, tags, draft = false } = Astro.props;
+---
+
+<article
+  class="reveal-on-scroll group relative flex h-full flex-col rounded-lg border border-slate-light bg-white p-5 transition-colors focus-within:border-accent hover:border-accent"
+  data-news-card
+  data-tags={tags.join("|")}
+>
+  <p class="text-xs text-slate">
+    <time datetime={date.toISOString().slice(0, 10)}>{formatDate(lang, date)}</time>
+    · {sourceName}
+    {draft && <span class="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-accent">{t(lang, "news.draft")}</span>}
+  </p>
+  <h2 class="mt-2 text-lg font-semibold tracking-tight text-ink">
+    <a
+      href={localePath(lang, `/news/${slug}`)}
+      class="after:absolute after:inset-0 after:content-[''] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    >
+      {title}
+    </a>
+  </h2>
+  {
+    tags.length > 0 && (
+      <ul class="mt-4 flex flex-wrap gap-2 text-xs" aria-label={t(lang, "news.tags")}>
+        {tags.map((tag) => (
+          <li class="rounded-full border border-slate-light px-2 py-0.5 text-slate">{tag}</li>
+        ))}
+      </ul>
+    )
+  }
+</article>

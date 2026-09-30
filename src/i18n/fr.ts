@@ -10,6 +10,22 @@ export const fr = {
   "banner.fallback":
     "Cette page n'est pas encore disponible dans cette langue. La version française est affichée.",
   "footer.rights": "Tous droits réservés.",
+  "nav.news": "Veille",
+  "news.title": "Veille",
+  "news.empty": "Aucune entrée pour le moment.",
+  "news.filter.label": "Filtrer par tag",
+  "news.filter.all": "Tous",
+  "news.count": "{n} entrée(s)",
+  "news.source": "Source",
+  "news.published": "Publié le",
+  "news.back": "Retour à la veille",
+  "news.rss": "Flux RSS",
+  "news.pagination": "Pagination",
+  "news.prev": "Précédent",
+  "news.next": "Suivant",
+  "news.page": "Page {p} sur {n}",
+  "news.draft": "Brouillon",
+  "news.tags": "Tags",
 } as const;
 
 export type Dict = Record<keyof typeof fr, string>;

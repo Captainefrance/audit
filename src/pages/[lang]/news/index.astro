@@ -1,0 +1,164 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import NewsCard from "../../../components/NewsCard.astro";
+import { format, getLangStaticPaths, localePath, t, type Lang } from "../../../i18n";
+import { getNewsEntries, localize, sortByDateDesc } from "../../../lib/collections";
+
+export const getStaticPaths = getLangStaticPaths;
+const lang = Astro.params.lang as Lang;
+
+const PAGE_SIZE = 12;
+const items = sortByDateDesc(localize(await getNewsEntries(), lang));
+const tags = [...new Set(items.flatMap((i) => i.entry.data.tags))].sort((a, b) =>
+  a.localeCompare(b, lang),
+);
+---
+
+<BaseLayout title={t(lang, "news.title")} lang={lang} path="/news/">
+  <link
+    slot="head"
+    rel="alternate"
+    type="application/rss+xml"
+    title={`${t(lang, "news.title")} (RSS)`}
+    href={localePath(lang, "/news/rss.xml").replace(/\/$/, "")}
+  />
+  <section
+    data-news
+    data-page-size={PAGE_SIZE}
+    data-count-template={t(lang, "news.count")}
+    data-page-template={t(lang, "news.page")}
+  >
+    <div class="flex flex-wrap items-baseline justify-between gap-4">
+      <h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        {t(lang, "news.title")}
+      </h1>
+      <a
+        href={localePath(lang, "/news/rss.xml").replace(/\/$/, "")}
+        class="text-sm text-slate transition-colors hover:text-accent"
+      >
+        {t(lang, "news.rss")}
+      </a>
+    </div>
+
+    {
+      items.length === 0 ? (
+        <p class="mt-10 text-slate">{t(lang, "news.empty")}</p>
+      ) : (
+        <>
+          {tags.length > 0 && (
+            <div class="mt-8" data-news-filter hidden>
+              <p class="text-sm text-slate" id="news-filter-label">
+                {t(lang, "news.filter.label")}
+              </p>
+              <ul class="mt-2 flex flex-wrap gap-2" aria-labelledby="news-filter-label">
+                {[null, ...tags].map((tag) => (
+                  <li>
+                    <button
+                      type="button"
+                      data-tag={tag ?? ""}
+                      aria-pressed={tag === null ? "true" : "false"}
+                      class="rounded-full border border-slate-light px-3 py-1 text-sm text-slate transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                    >
+                      {tag ?? t(lang, "news.filter.all")}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <p class="mt-6 text-sm text-slate" data-news-status role="status" aria-live="polite">
+            {format(t(lang, "news.count"), { n: items.length })}
+          </p>
+
+          <ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map(({ entry, slug }) => (
+              <li>
+                <NewsCard
+                  lang={lang}
+                  slug={slug}
+                  title={entry.data.title}
+                  date={entry.data.date}
+                  sourceName={entry.data.source.name}
+                  tags={entry.data.tags}
+                  draft={entry.data.draft}
+                />
+              </li>
+            ))}
+          </ul>
+
+          <nav
+            class="mt-10 flex items-center justify-center gap-4 text-sm"
+            aria-label={t(lang, "news.pagination")}
+            data-news-pagination
+            hidden
+          >
+            <button type="button" data-prev class="rounded-full border border-slate-light px-4 py-1.5 text-slate transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:hover:border-slate-light disabled:hover:text-slate focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              {t(lang, "news.prev")}
+            </button>
+            <span data-page-label class="text-slate"></span>
+            <button type="button" data-next class="rounded-full border border-slate-light px-4 py-1.5 text-slate transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:hover:border-slate-light disabled:hover:text-slate focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              {t(lang, "news.next")}
+            </button>
+          </nav>
+        </>
+      )
+    }
+  </section>
+</BaseLayout>
+
+<script>
+  // Filtre par tag + pagination, côté client. Sans JS : toute la liste reste visible.
+  const root = document.querySelector<HTMLElement>("[data-news]");
+  if (root) {
+    const pageSize = Number(root.dataset.pageSize) || 12;
+    const cards = [...root.querySelectorAll<HTMLElement>("[data-news-card]")];
+    const filter = root.querySelector<HTMLElement>("[data-news-filter]");
+    const pager = root.querySelector<HTMLElement>("[data-news-pagination]");
+    const status = root.querySelector<HTMLElement>("[data-news-status]");
+    const pageLabel = root.querySelector<HTMLElement>("[data-page-label]");
+    const prev = root.querySelector<HTMLButtonElement>("[data-prev]");
+    const next = root.querySelector<HTMLButtonElement>("[data-next]");
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-tag]")];
+    const fill = (tpl: string | undefined, values: Record<string, number>) =>
+      (tpl ?? "").replace(/\{(\w+)\}/g, (_, k) => String(values[k] ?? ""));
+
+    const params = new URLSearchParams(location.hash.slice(1));
+    let tag = params.get("tag") ?? "";
+    let page = Math.max(1, Number(params.get("page")) || 1);
+    if (!buttons.some((b) => b.dataset.tag === tag)) tag = "";
+
+    const render = () => {
+      const matches = cards.filter(
+        (c) => !tag || (c.dataset.tags ?? "").split("|").includes(tag),
+      );
+      const pages = Math.max(1, Math.ceil(matches.length / pageSize));
+      page = Math.min(page, pages);
+      const visible = new Set(matches.slice((page - 1) * pageSize, page * pageSize));
+      for (const c of cards) c.closest("li")!.hidden = !visible.has(c);
+      for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.tag === tag));
+      if (status) status.textContent = fill(root.dataset.countTemplate, { n: matches.length });
+      if (pager) pager.hidden = pages <= 1;
+      if (pageLabel) pageLabel.textContent = fill(root.dataset.pageTemplate, { p: page, n: pages });
+      if (prev) prev.disabled = page <= 1;
+      if (next) next.disabled = page >= pages;
+      const state = new URLSearchParams();
+      if (tag) state.set("tag", tag);
+      if (page > 1) state.set("page", String(page));
+      const hash = state.toString();
+      history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
+    };
+
+    if (filter) filter.hidden = false;
+    for (const b of buttons) {
+      b.addEventListener("click", () => {
+        tag = b.dataset.tag ?? "";
+        page = 1;
+        render();
+      });
+    }
+    prev?.addEventListener("click", () => { page -= 1; render(); });
+    next?.addEventListener("click", () => { page += 1; render(); });
+    render();
+  }
+</script>

@@ -13,6 +13,8 @@ interface Props {
   path?: string;
   /** Langues où le contenu existe réellement. Une langue absente affiche le FR avec bandeau. */
   translations?: readonly Lang[];
+  /** Chemin par langue quand il diffère (slugs traduits). Défaut : `path` pour toutes. */
+  pathByLang?: Partial<Record<Lang, string>>;
   noindex?: boolean;
 }
 
@@ -22,18 +24,25 @@ const {
   lang = defaultLang,
   path,
   translations = locales,
+  pathByLang,
   noindex = false,
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://audit-hq.dev");
 const abs = (p: string) => new URL(p, site).href;
 
+const pathFor = (l: Lang) => pathByLang?.[l] ?? path!;
+const switcherPaths =
+  path !== undefined
+    ? (Object.fromEntries(locales.map((l) => [l, pathFor(l)])) as Record<Lang, string>)
+    : undefined;
+
 const fallback = path !== undefined && !translations.includes(lang);
 const canonical = path !== undefined
-  ? abs(localePath(fallback ? defaultLang : lang, path))
+  ? abs(localePath(fallback ? defaultLang : lang, pathFor(fallback ? defaultLang : lang)))
   : abs(Astro.url.pathname);
 const alternates = path !== undefined
-  ? translations.map((l) => ({ lang: l, href: abs(localePath(l, path)) }))
+  ? translations.map((l) => ({ lang: l, href: abs(localePath(l, pathFor(l))) }))
   : [];
 ---
 
@@ -55,7 +64,7 @@ const alternates = path !== undefined
         <link
           rel="alternate"
           hreflang="x-default"
-          href={abs(localePath(defaultLang, path))}
+          href={abs(localePath(defaultLang, pathFor(defaultLang)))}
         />
       )
     }
@@ -64,7 +73,7 @@ const alternates = path !== undefined
     <title>{title} · audit-hq.dev</title>
   </head>
   <body class="flex min-h-screen flex-col overflow-x-clip">
-    <Header lang={lang} path={path} />
+    <Header lang={lang} paths={switcherPaths} />
     <main class="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
       {fallback && <FallbackBanner message={t(lang, "banner.fallback")} />}
       <div lang={fallback ? defaultLang : undefined}>

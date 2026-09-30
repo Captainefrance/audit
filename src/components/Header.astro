@@ -4,9 +4,9 @@ import { localePath, splitLocale, t, type Lang } from "../i18n";
 
 interface Props {
   lang: Lang;
-  path?: string;
+  paths?: Record<Lang, string>;
 }
-const { lang, path } = Astro.props;
+const { lang, paths } = Astro.props;
 
 const navItems = [
   { path: "/", label: t(lang, "nav.home") },
@@ -53,7 +53,7 @@ const current = splitLocale(Astro.url.pathname).rest.replace(/\/$/, "") || "/";
           }
         </ul>
       </nav>
-      {path !== undefined && <LanguageSwitcher lang={lang} path={path} />}
+      {paths && <LanguageSwitcher lang={lang} paths={paths} />}
     </div>
   </div>
 </header>
