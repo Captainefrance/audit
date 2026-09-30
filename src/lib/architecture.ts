@@ -1,9 +1,11 @@
 import { getCollection } from "astro:content";
 import {
+  externals,
   layers,
   links,
   linkTypeLabels,
   linkTypeOrder,
+  type ExternalKind,
   type Layer,
   type LinkType,
   type ToolNode,
@@ -30,6 +32,14 @@ export interface ResolvedLayer {
   draft: boolean;
 }
 
+export interface ResolvedExternal {
+  id: string;
+  kind: ExternalKind;
+  name: string;
+  placement: "top" | "bottom";
+  canFail: boolean;
+}
+
 export interface ResolvedLink {
   from: string;
   to: string;
@@ -38,6 +48,7 @@ export interface ResolvedLink {
 
 export interface ResolvedGraph {
   layers: ResolvedLayer[];
+  externals: ResolvedExternal[];
   links: ResolvedLink[];
   /** Types de liens réellement utilisés (visibles), avec libellé dans la langue demandée. */
   linkTypes: { type: LinkType; label: string }[];
@@ -55,11 +66,18 @@ function validate(toolEntries: ToolEntries, layerEntries: LayerEntries) {
   const layerIds = new Set<string>();
   const toolLayer = new Map<string, string>();
   const deps = new Map<string, string[]>();
+  const externalIds = new Map<string, boolean>(); // id → canFail
+  for (const ext of externals) {
+    if (externalIds.has(ext.id)) throw new Error(`architecture.ts : nœud externe "${ext.id}" en double`);
+    externalIds.set(ext.id, Boolean(ext.canFail));
+  }
   for (const layer of layers) {
     if (layerIds.has(layer.id)) throw new Error(`architecture.ts : couche "${layer.id}" en double`);
     layerIds.add(layer.id);
     for (const tool of layer.tools) {
-      if (toolLayer.has(tool.id)) throw new Error(`architecture.ts : outil "${tool.id}" en double`);
+      if (toolLayer.has(tool.id) || externalIds.has(tool.id)) {
+        throw new Error(`architecture.ts : id "${tool.id}" en double (outils et nœuds externes partagent les ids)`);
+      }
       toolLayer.set(tool.id, layer.id);
       deps.set(tool.id, tool.dependsOn ?? []);
     }
@@ -67,6 +85,12 @@ function validate(toolEntries: ToolEntries, layerEntries: LayerEntries) {
   for (const [id, list] of deps) {
     for (const dep of list) {
       if (dep === id) throw new Error(`architecture.ts : "${id}" dépend de lui-même`);
+      if (externalIds.has(dep)) {
+        if (!externalIds.get(dep)) {
+          throw new Error(`architecture.ts : "${id}".dependsOn → nœud externe "${dep}" sans canFail: true`);
+        }
+        continue;
+      }
       if (!toolLayer.has(dep)) throw new Error(`architecture.ts : "${id}".dependsOn → "${dep}" inconnu`);
     }
   }
@@ -85,7 +109,7 @@ function validate(toolEntries: ToolEntries, layerEntries: LayerEntries) {
 
   for (const link of links) {
     for (const end of [link.from, link.to]) {
-      if (!toolLayer.has(end)) throw new Error(`architecture.ts : lien ${link.from} → ${link.to} : outil "${end}" inconnu`);
+      if (!toolLayer.has(end) && !externalIds.has(end)) throw new Error(`architecture.ts : lien ${link.from} → ${link.to} : outil "${end}" inconnu`);
     }
     if (!(link.type in linkTypeLabels)) {
       throw new Error(`architecture.ts : lien ${link.from} → ${link.to} : type "${link.type}" inconnu`);
@@ -124,6 +148,8 @@ export async function resolveGraph(lang: Lang): Promise<ResolvedGraph> {
   const visibleLayers = visible(layers);
   const visibleIds = new Set<string>();
   for (const layer of visibleLayers) for (const tool of visible(layer.tools)) visibleIds.add(tool.id);
+  const visibleExternals = visible(externals);
+  for (const ext of visibleExternals) visibleIds.add(ext.id);
 
   const resolveTool = (layer: Layer) => (tool: ToolNode): ResolvedTool => {
     if (tool.hasPage && !pages.has(tool.id) && !tool.draft) {
@@ -152,8 +178,17 @@ export async function resolveGraph(lang: Lang): Promise<ResolvedGraph> {
     .map(({ from, to, type }) => ({ from, to, type }));
   const used = new Set(resolvedLinks.map((l) => l.type));
 
+  const resolvedExternals: ResolvedExternal[] = visibleExternals.map((e) => ({
+    id: e.id,
+    kind: e.kind,
+    name: e.name[lang],
+    placement: e.placement ?? "top",
+    canFail: Boolean(e.canFail),
+  }));
+
   return {
     layers: resolvedLayers,
+    externals: resolvedExternals,
     links: resolvedLinks,
     linkTypes: linkTypeOrder
       .filter((type) => used.has(type))
