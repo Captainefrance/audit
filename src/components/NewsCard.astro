@@ -16,6 +16,7 @@ const { lang, slug, title, date, sourceName, tags, draft = false } = Astro.props
 <article
   class="reveal-on-scroll spotlight group relative flex h-full flex-col rounded-lg border border-slate-light bg-white p-5 transition-colors focus-within:border-accent hover:border-accent"
   data-news-card
+  transition:name={`news-${slug}`}
   data-tags={tags.join("|")}
 >
   <p class="text-xs text-slate">

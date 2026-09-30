@@ -3,16 +3,18 @@ import { localePath, t, type Lang } from "../i18n";
 
 interface Props {
   lang: Lang;
+  id: string;
   name: string;
   category: string;
   /** Chemin sans locale de la fiche ; absent = carte sans lien. */
   href?: string;
   draft?: boolean;
 }
-const { lang, name, category, href, draft = false } = Astro.props;
+const { lang, id, name, category, href, draft = false } = Astro.props;
 ---
 
 <article
+  transition:name={href ? `tool-${id}` : undefined}
   class:list={[
     "reveal-on-scroll relative flex h-full flex-col rounded-lg border border-slate-light bg-white p-5",
     href ? "spotlight transition-colors focus-within:border-accent hover:border-accent" : "",

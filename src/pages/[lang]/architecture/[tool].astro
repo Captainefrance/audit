@@ -43,7 +43,7 @@ const path = `/architecture/${item.slug}/`;
     >
       ← {t(lang, "architecture.back")}
     </a>
-    <header class="mt-6">
+    <header class="mt-6" transition:name={`tool-${tool.id}`}>
       <p class="text-sm text-slate">
         {t(lang, "architecture.layer")} : {layer.name} · {tool.category}
       </p>

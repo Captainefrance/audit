@@ -36,7 +36,7 @@ const pathByLang = Object.fromEntries(locales.map((l) => [l, `/news/${slugs[l]}/
     <a href={localePath(lang, "/news")} class="text-sm text-slate transition-colors hover:text-accent">
       ← {t(lang, "news.back")}
     </a>
-    <header class="mt-6">
+    <header class="mt-6" transition:name={`news-${item.slug}`}>
       <p class="text-sm text-slate">
         {t(lang, "news.published")}
         <time datetime={entry.data.date.toISOString().slice(0, 10)}>{formatDate(lang, entry.data.date)}</time>

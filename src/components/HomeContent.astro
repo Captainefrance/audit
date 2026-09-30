@@ -1,4 +1,11 @@
 ---
+import { localePath, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
 const categories = ["PAM", "EDR", "SIEM", "IAM", "Backup", "Réseau"];
 
 const sections = [
@@ -8,7 +15,7 @@ const sections = [
     text: "Une fiche par outil : à quoi il sert, le détail technique, un avis personnel et le pays d'hébergement.",
   },
   {
-    href: "/architecture",
+    href: localePath(lang, "/architecture"),
     title: "Architecture",
     text: "Comment ces briques s'assemblent dans un système d'information : flux, dépendances, points de contrôle.",
   },

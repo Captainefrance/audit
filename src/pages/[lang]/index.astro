@@ -9,5 +9,5 @@ const lang = Astro.params.lang as Lang;
 ---
 
 <BaseLayout title={t(lang, "nav.home")} lang={lang} path="/" translations={pageTranslations.home}>
-  <HomeContent />
+  <HomeContent lang={lang} />
 </BaseLayout>

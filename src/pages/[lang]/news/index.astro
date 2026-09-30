@@ -35,6 +35,7 @@ const tags = [...new Set(items.flatMap((i) => i.entry.data.tags))].sort((a, b) =
       </h1>
       <a
         href={localePath(lang, "/news/rss.xml").replace(/\/$/, "")}
+        data-astro-reload
         class="text-sm text-slate transition-colors hover:text-accent"
       >
         {t(lang, "news.rss")}
