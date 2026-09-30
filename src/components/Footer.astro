@@ -1,15 +1,36 @@
 ---
-import { t, type Lang } from "../i18n";
+import { localePath, t, type Lang } from "../i18n";
 
 interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
 const year = new Date().getFullYear();
+
+const links = [
+  { path: "/news", label: t(lang, "nav.news") },
+  { path: "/architecture", label: t(lang, "nav.architecture") },
+  { path: "/a-propos", label: t(lang, "nav.about") },
+];
 ---
 
 <footer class="border-t border-slate-light">
-  <div class="mx-auto max-w-5xl px-6 py-8 text-sm text-slate">
+  <div
+    class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-8 text-sm text-slate"
+  >
     <p>© {year} audit-hq.dev — {t(lang, "footer.rights")}</p>
+    <nav aria-label={t(lang, "footer.nav")}>
+      <ul class="flex flex-wrap gap-x-6 gap-y-2">
+        {
+          links.map((l) => (
+            <li>
+              <a href={localePath(lang, l.path)} class="transition-colors hover:text-accent">
+                {l.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
   </div>
 </footer>

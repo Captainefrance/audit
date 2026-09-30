@@ -9,6 +9,7 @@ export const fr = {
   "lang.en.full": "English",
   "banner.fallback":
     "Cette page n'est pas encore disponible dans cette langue. La version française est affichée.",
+  "footer.nav": "Navigation du pied de page",
   "footer.rights": "Tous droits réservés.",
   "nav.news": "Veille",
   "news.title": "Veille",

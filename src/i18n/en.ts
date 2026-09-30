@@ -11,6 +11,7 @@ export const en: Dict = {
   "lang.en.full": "English",
   "banner.fallback":
     "This page is not available in this language yet. The French version is shown.",
+  "footer.nav": "Footer navigation",
   "footer.rights": "All rights reserved.",
   "nav.news": "News",
   "news.title": "News",
