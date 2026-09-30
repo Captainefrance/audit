@@ -1,0 +1,35 @@
+---
+// Barre décorative de progression de lecture (masquée aux lecteurs d'écran).
+// Sur une page qui ne défile pas, la progression reste à 0 : la barre est invisible.
+---
+
+<div class="reading-progress" data-reading-progress aria-hidden="true"></div>
+
+<style is:global>
+  .reading-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 50;
+    height: 3px;
+    background: var(--reading-progress-color);
+    transform: scaleX(0);
+    transform-origin: left;
+    pointer-events: none;
+  }
+  @supports (animation-timeline: scroll()) {
+    .reading-progress {
+      /* Longhands volontairement incomplets : l'optimiseur CSS ne les fond pas en un
+         raccourci `animation` que les navigateurs sans timeline dans le raccourci rejettent. */
+      animation-name: reading-progress;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
+      animation-duration: auto;
+      animation-timeline: scroll(root block);
+    }
+  }
+  @keyframes reading-progress {
+    to {
+      transform: scaleX(1);
+    }
+  }
+</style>

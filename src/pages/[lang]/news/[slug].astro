@@ -1,6 +1,7 @@
 ---
 import { render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ReadingProgress from "../../../components/ReadingProgress.astro";
 import { formatDate, getLangStaticPaths, localePath, locales, t, type Lang } from "../../../i18n";
 import { getNewsEntries, localize, translationInfo } from "../../../lib/collections";
 
@@ -30,6 +31,7 @@ const pathByLang = Object.fromEntries(locales.map((l) => [l, `/news/${slugs[l]}/
   pathByLang={pathByLang}
   translations={translated}
 >
+  <ReadingProgress />
   <article>
     <a href={localePath(lang, "/news")} class="text-sm text-slate transition-colors hover:text-accent">
       ← {t(lang, "news.back")}

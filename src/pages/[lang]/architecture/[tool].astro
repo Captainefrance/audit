@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ReadingProgress from "../../../components/ReadingProgress.astro";
 import ArchitectureDiagram from "../../../components/ArchitectureDiagram.astro";
 import { getLangStaticPaths, localePath, t, type Lang } from "../../../i18n";
 import { resolveArchitecture } from "../../../lib/architecture";
@@ -34,6 +35,7 @@ const path = `/architecture/${item.slug}/`;
 ---
 
 <BaseLayout title={entry.data.name} lang={lang} path={path} translations={translated}>
+  <ReadingProgress />
   <article>
     <a
       href={localePath(lang, "/architecture")}
