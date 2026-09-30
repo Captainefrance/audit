@@ -28,4 +28,14 @@ const tools = defineCollection({
   }),
 });
 
-export const collections = { news, tools };
+// Texte d'une couche, affiché à côté du schéma au défilement. Nom de fichier = id de la couche
+// (src/data/architecture.ts), translationKey identique. Corps vide = pas de panneau.
+const layers = defineCollection({
+  loader: glob({ pattern: "{fr,en}/**/*.md", base: "./src/content/layers" }),
+  schema: z.object({
+    translationKey: z.string(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { news, tools, layers };

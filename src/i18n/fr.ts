@@ -37,6 +37,8 @@ export const fr = {
   "architecture.position": "Position dans l'architecture",
   "architecture.back": "Retour à l'architecture",
   "architecture.no_page": "Pas de fiche",
+  "architecture.legend": "Types de liens",
+  "architecture.steps": "Couches de l'architecture",
 } as const;
 
 export type Dict = Record<keyof typeof fr, string>;

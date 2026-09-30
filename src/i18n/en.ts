@@ -39,4 +39,6 @@ export const en: Dict = {
   "architecture.position": "Position in the architecture",
   "architecture.back": "Back to architecture",
   "architecture.no_page": "No page",
+  "architecture.legend": "Link types",
+  "architecture.steps": "Architecture layers",
 };
