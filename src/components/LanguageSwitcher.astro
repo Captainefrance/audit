@@ -1,0 +1,34 @@
+---
+import { locales, localePath, t, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+  /** Chemin sans locale de la page courante. */
+  path: string;
+}
+const { lang, path } = Astro.props;
+---
+
+<nav aria-label={t(lang, "lang.label")} class="text-sm">
+  <ul class="flex gap-3">
+    {
+      locales.map((l) => (
+        <li>
+          <a
+            href={localePath(l, path)}
+            hreflang={l}
+            lang={l}
+            title={t(l, `lang.${l}.full`)}
+            aria-current={l === lang ? "true" : undefined}
+            class:list={[
+              "transition-colors hover:text-accent",
+              l === lang ? "font-medium text-accent" : "text-slate",
+            ]}
+          >
+            {t(l, `lang.${l}`)}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>

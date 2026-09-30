@@ -1,33 +1,76 @@
 ---
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+import FallbackBanner from "../components/FallbackBanner.astro";
+import { defaultLang, locales, localePath, t, type Lang } from "../i18n";
 import "../styles/global.css";
 
 interface Props {
   title: string;
   description?: string;
+  lang?: Lang;
+  /** Chemin sans locale ("/a-propos/"). Absent = page hors i18n (pas de hreflang ni de sélecteur). */
+  path?: string;
+  /** Langues où le contenu existe réellement. Une langue absente affiche le FR avec bandeau. */
+  translations?: readonly Lang[];
+  noindex?: boolean;
 }
 
 const {
   title,
   description = "audit-hq.dev — comparatif d'outils, architecture et souveraineté numérique.",
+  lang = defaultLang,
+  path,
+  translations = locales,
+  noindex = false,
 } = Astro.props;
+
+const site = Astro.site ?? new URL("https://audit-hq.dev");
+const abs = (p: string) => new URL(p, site).href;
+
+const fallback = path !== undefined && !translations.includes(lang);
+const canonical = path !== undefined
+  ? abs(localePath(fallback ? defaultLang : lang, path))
+  : abs(Astro.url.pathname);
+const alternates = path !== undefined
+  ? translations.map((l) => ({ lang: l, href: abs(localePath(l, path)) }))
+  : [];
 ---
 
 <!doctype html>
-<html lang="fr">
+<html lang={lang}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {
+      alternates.map((a) => (
+        <link rel="alternate" hreflang={a.lang} href={a.href} />
+      ))
+    }
+    {
+      alternates.length > 0 && (
+        <link
+          rel="alternate"
+          hreflang="x-default"
+          href={abs(localePath(defaultLang, path))}
+        />
+      )
+    }
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <slot name="head" />
     <title>{title} · audit-hq.dev</title>
   </head>
   <body class="flex min-h-screen flex-col overflow-x-clip">
-    <Header />
+    <Header lang={lang} path={path} />
     <main class="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-      <slot />
+      {fallback && <FallbackBanner message={t(lang, "banner.fallback")} />}
+      <div lang={fallback ? defaultLang : undefined}>
+        <slot />
+      </div>
     </main>
-    <Footer />
+    <Footer lang={lang} />
   </body>
 </html>

@@ -1,15 +1,19 @@
 ---
+import LanguageSwitcher from "./LanguageSwitcher.astro";
+import { localePath, splitLocale, t, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+  path?: string;
+}
+const { lang, path } = Astro.props;
+
 const navItems = [
-  { href: "/", label: "Accueil" },
-  { href: "/comparatif", label: "Comparatif d'outils" },
-  { href: "/architecture", label: "Architecture" },
-  { href: "/souverainete", label: "Souveraineté" },
-  { href: "/a-propos", label: "À propos" },
-  // TODO: entrée de test — à retirer avant mise en prod (voir src/pages/demo.astro)
-  { href: "/demo", label: "Démo (test)" },
+  { path: "/", label: t(lang, "nav.home") },
+  { path: "/a-propos", label: t(lang, "nav.about") },
 ];
 
-const currentPath = Astro.url.pathname;
+const current = splitLocale(Astro.url.pathname).rest.replace(/\/$/, "") || "/";
 ---
 
 <header class="border-b border-slate-light">
@@ -17,36 +21,39 @@ const currentPath = Astro.url.pathname;
     class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5"
   >
     <a
-      href="/"
+      href={localePath(lang)}
       class="whitespace-nowrap text-sm font-semibold tracking-tight text-ink"
     >
       audit-hq<span class="text-accent">.dev</span>
     </a>
-    <nav aria-label="Navigation principale">
-      <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-        {
-          navItems.map((item) => {
-            const isActive =
-              item.href === "/"
-                ? currentPath === "/"
-                : currentPath.startsWith(item.href);
-            return (
-              <li>
-                <a
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  class:list={[
-                    "transition-colors hover:text-accent",
-                    isActive ? "text-accent font-medium" : "text-slate",
-                  ]}
-                >
-                  {item.label}
-                </a>
-              </li>
-            );
-          })
-        }
-      </ul>
-    </nav>
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+      <nav aria-label={t(lang, "nav.label")}>
+        <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          {
+            navItems.map((item) => {
+              const isActive =
+                item.path === "/"
+                  ? current === "/"
+                  : current.startsWith(item.path);
+              return (
+                <li>
+                  <a
+                    href={localePath(lang, item.path)}
+                    aria-current={isActive ? "page" : undefined}
+                    class:list={[
+                      "transition-colors hover:text-accent",
+                      isActive ? "text-accent font-medium" : "text-slate",
+                    ]}
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              );
+            })
+          }
+        </ul>
+      </nav>
+      {path !== undefined && <LanguageSwitcher lang={lang} path={path} />}
+    </div>
   </div>
 </header>

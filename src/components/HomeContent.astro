@@ -1,0 +1,75 @@
+---
+const categories = ["PAM", "EDR", "SIEM", "IAM", "Backup", "Réseau"];
+
+const sections = [
+  {
+    href: "/comparatif",
+    title: "Comparatif d'outils",
+    text: "Une fiche par outil : à quoi il sert, le détail technique, un avis personnel et le pays d'hébergement.",
+  },
+  {
+    href: "/architecture",
+    title: "Architecture",
+    text: "Comment ces briques s'assemblent dans un système d'information : flux, dépendances, points de contrôle.",
+  },
+  {
+    href: "/souverainete",
+    title: "Souveraineté",
+    text: "Une synthèse de la juridiction et de l'hébergement des outils, pour savoir à qui appartiennent vos données.",
+  },
+];
+---
+<section class="reveal-on-scroll">
+  <p class="text-sm font-medium text-accent">audit-hq.dev</p>
+  <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+    Auditer et choisir ses outils de sécurité, en connaissance de cause
+  </h1>
+  <p class="mt-4 max-w-2xl text-slate">
+    audit-hq.dev rassemble un audit indépendant des outils qui protègent un
+    système d'information : accès privilégiés, postes, journaux, identités,
+    sauvegardes et réseau. Le but est simple : comprendre ce que chaque outil
+    fait vraiment, comment il s'intègre, et où sont hébergées vos données.
+  </p>
+  <ul class="mt-6 flex flex-wrap gap-2 text-sm">
+    {
+      categories.map((c) => (
+        <li class="rounded-full border border-slate-light px-3 py-1 text-slate">
+          {c}
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<section class="reveal-on-scroll mt-16">
+  <h2 class="text-2xl font-semibold tracking-tight text-ink">
+    Ce que vous trouverez ici
+  </h2>
+  <ul class="mt-6 grid gap-4 sm:grid-cols-3">
+    {
+      sections.map((s) => (
+        <li>
+          <a
+            href={s.href}
+            class="block h-full rounded-lg border border-slate-light p-5 transition-colors hover:border-accent"
+          >
+            <h3 class="font-semibold text-ink">{s.title}</h3>
+            <p class="mt-2 text-sm text-slate">{s.text}</p>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<section class="reveal-on-scroll mt-16">
+  <h2 class="text-2xl font-semibold tracking-tight text-ink">
+    Pourquoi ce site
+  </h2>
+  <p class="mt-4 max-w-2xl text-slate">
+    Les catalogues d'éditeurs vantent tous la même chose. Ici, chaque outil
+    est évalué sur des critères explicites et comparables, avec un avis
+    assumé. La souveraineté numérique est traitée comme un critère à part
+    entière, au même titre que la fonctionnalité ou le coût.
+  </p>
+</section>

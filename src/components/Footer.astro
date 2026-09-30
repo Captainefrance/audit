@@ -1,9 +1,15 @@
 ---
+import { t, type Lang } from "../i18n";
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
 const year = new Date().getFullYear();
 ---
 
 <footer class="border-t border-slate-light">
   <div class="mx-auto max-w-5xl px-6 py-8 text-sm text-slate">
-    <p>© {year} audit-hq.dev — Tous droits réservés.</p>
+    <p>© {year} audit-hq.dev — {t(lang, "footer.rights")}</p>
   </div>
 </footer>
