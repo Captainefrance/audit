@@ -5,10 +5,10 @@
  *   [data-layer="<id>"]  [data-node="<id>"]  [data-link][data-from][data-to]
  *   [data-reveal-index="<n>"]  index de la couche qui « porte » l'élément (lien : max des deux)
  *
- * et le CSS réagit à `data-state` : "hidden" | "dim" | "active" | "down" (absent = visible).
+ * et le CSS réagit à `data-state` : "hidden" | "dim" | "visited" | "active" | "down" (absent = visible).
  */
 
-export type DiagramState = "hidden" | "dim" | "active" | "down";
+export type DiagramState = "hidden" | "dim" | "visited" | "active" | "down";
 
 export function setState(el: Element, state: DiagramState | null): void {
   if (state) el.setAttribute("data-state", state);

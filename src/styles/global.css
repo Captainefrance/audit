@@ -292,3 +292,134 @@ body {
     transition: none;
   }
 }
+
+/* ---------------------------------------------------------------------------------------------
+ * Nœuds externes et simulation (scénarios attaque / flux / panne).
+ * Variables : couleurs des nœuds externes et des états de simulation.
+ * ------------------------------------------------------------------------------------------- */
+:root {
+  --diagram-external-fill: #ffffff;
+  --diagram-external-attacker: #9f1239;
+  --diagram-external-internet: var(--color-slate);
+  --diagram-external-user: #0f766e;
+  --diagram-external-other: var(--color-slate);
+  --diagram-down-fill: #e5e7eb;
+  --sim-glow: rgb(29 78 137 / 0.35);
+}
+.node-external {
+  stroke-dasharray: 6 4;
+}
+.node-external.kind-attacker { stroke: var(--diagram-external-attacker); }
+.node-external.kind-internet { stroke: var(--diagram-external-internet); }
+.node-external.kind-user { stroke: var(--diagram-external-user); }
+.node-external.kind-other { stroke: var(--diagram-external-other); }
+.external-item.kind-attacker { border-color: var(--diagram-external-attacker); }
+.external-item.kind-internet { border-color: var(--diagram-external-internet); }
+.external-item.kind-user { border-color: var(--diagram-external-user); }
+.external-item.kind-other { border-color: var(--diagram-external-other); }
+
+.down-mark {
+  display: none;
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+/* États des nœuds (SVG) : actif, visité (traînée), estompé, hors service. */
+svg [data-node][data-state="dim"] { opacity: 0.35; }
+svg [data-node][data-state="visited"] .node-box {
+  stroke: var(--diagram-highlight);
+  stroke-opacity: 0.5;
+  stroke-width: 2.5;
+}
+svg [data-node][data-state="active"] { filter: drop-shadow(0 0 5px var(--sim-glow)); }
+svg [data-node][data-state="active"] .node-box {
+  stroke: var(--diagram-highlight);
+  stroke-opacity: 1;
+  stroke-width: 3.5;
+}
+svg [data-node][data-state="down"] { opacity: 0.6; }
+svg [data-node][data-state="down"] .node-box {
+  fill: var(--diagram-down-fill);
+  stroke: var(--color-slate);
+  stroke-dasharray: 4 3;
+}
+[data-node][data-state="down"] .down-mark { display: inline; }
+
+/* États des nœuds (liste mobile). */
+/* Estompé sans baisser l'opacité du texte (contraste conservé) : le fond de la pastille disparaît. */
+[data-node][data-state="dim"] .node-item {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--color-slate-light);
+}
+[data-node][data-state="visited"] .node-item {
+  outline: 2px solid color-mix(in srgb, var(--diagram-highlight) 45%, transparent);
+  outline-offset: 1px;
+}
+[data-node][data-state="active"] .node-item {
+  outline: 3px solid var(--diagram-highlight);
+  outline-offset: 1px;
+}
+[data-node][data-state="down"] .node-item {
+  background: var(--diagram-down-fill);
+  text-decoration: line-through;
+}
+.sim-slot {
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--color-accent-soft);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* États des liens. */
+path[data-link] { transition: opacity 0.3s ease, stroke-width 0.3s ease; }
+path[data-link][data-state="dim"] { opacity: 0.15; }
+path[data-link][data-state="visited"] { opacity: 0.65; }
+path[data-link][data-state="active"] { opacity: 1; stroke-width: 3.5; }
+path[data-link][data-state="down"] { opacity: 0.2; }
+@media (prefers-reduced-motion: no-preference) {
+  path[data-link][data-state="active"] {
+    stroke-dasharray: 8 6;
+    animation: link-flow 0.8s linear infinite;
+  }
+}
+@keyframes link-flow {
+  to { stroke-dashoffset: -14; }
+}
+
+/* Panne : éléments cliquables / focalisables (rôle bouton posé par le moteur). */
+[data-sim-interactive="true"] { cursor: pointer; }
+[data-sim-interactive="true"][aria-disabled="true"] { cursor: default; }
+[data-sim-interactive="true"]:focus-visible {
+  outline: 2px solid var(--diagram-highlight);
+  outline-offset: 3px;
+  border-radius: 10px;
+}
+svg [data-sim-interactive="true"]:hover .node-box { stroke: var(--diagram-highlight); }
+
+/* Contrôles de lecture. */
+.sim-progress {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-slate-light);
+}
+.sim-progress-bar {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sim-progress-bar,
+  path[data-link] { transition: none; }
+}
+/* Avant que le JS ne prenne la main : place réservée, rien d'utilisable affiché. Sans JS : masqué. */
+[data-sim]:not([data-sim-ready]) [data-sim-ui] { visibility: hidden; }
+@media (scripting: none) {
+  [data-sim] { display: none; }
+}

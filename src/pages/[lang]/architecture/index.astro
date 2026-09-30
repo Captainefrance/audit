@@ -4,12 +4,19 @@ import BaseLayout from "../../../layouts/BaseLayout.astro";
 import ArchitectureDiagram from "../../../components/ArchitectureDiagram.astro";
 import LayerCard from "../../../components/LayerCard.astro";
 import ToolCard from "../../../components/ToolCard.astro";
+import ExternalCard from "../../../components/ExternalCard.astro";
+import ScenarioPlayer from "../../../components/ScenarioPlayer.astro";
 import { getLangStaticPaths, t, type Lang } from "../../../i18n";
 import { getLayerPanels, resolveGraph } from "../../../lib/architecture";
+import { resolveScenarios } from "../../../lib/scenarios";
 
 export const getStaticPaths = getLangStaticPaths;
 const lang = Astro.params.lang as Lang;
-const { layers, links, linkTypes } = await resolveGraph(lang);
+const graph = await resolveGraph(lang);
+const { layers, externals, links, linkTypes } = graph;
+const topExternals = externals.filter((e) => e.placement === "top");
+const bottomExternals = externals.filter((e) => e.placement === "bottom");
+const scenarios = resolveScenarios(lang);
 const hasContent = layers.some((l) => l.tools.length > 0);
 
 // Scrollytelling seulement si au moins une couche a un texte ; sinon schéma statique complet.
@@ -42,11 +49,18 @@ const scrolly = hasContent && panels.size > 0;
               <ArchitectureDiagram
                 lang={lang}
                 layers={layers}
+                externals={externals}
                 links={links}
                 linkTypes={linkTypes}
                 mode="scrolly"
               />
             </div>
+            <div class="md:contents">
+            {topExternals.length > 0 && (
+              <div class="mb-6 md:hidden reveal-on-scroll">
+                <ExternalCard lang={lang} externals={topExternals} />
+              </div>
+            )}
             <ol class="space-y-10 md:space-y-0" aria-label={t(lang, "architecture.steps")}>
               {layers.map((layer) => {
                 const panel = panels.get(layer.id);
@@ -74,13 +88,21 @@ const scrolly = hasContent && panels.size > 0;
                 );
               })}
             </ol>
+            {bottomExternals.length > 0 && (
+              <div class="mt-6 md:hidden reveal-on-scroll">
+                <ExternalCard lang={lang} externals={bottomExternals} />
+              </div>
+            )}
+            </div>
           </div>
         </div>
       ) : (
         <div class="mt-10">
-          <ArchitectureDiagram lang={lang} layers={layers} links={links} linkTypes={linkTypes} />
+          <ArchitectureDiagram lang={lang} layers={layers} externals={externals} links={links} linkTypes={linkTypes} />
         </div>
       )}
+
+      <ScenarioPlayer lang={lang} graph={graph} scenarios={scenarios} />
 
       <section class="mt-16" aria-labelledby="tool-index">
         <h2 id="tool-index" class="text-2xl font-semibold tracking-tight text-ink">
@@ -128,4 +150,5 @@ const scrolly = hasContent && panels.size > 0;
 
 <script>
   import "../../../scripts/architecture-scrolly";
+  import "../../../scripts/sequence-engine";
 </script>

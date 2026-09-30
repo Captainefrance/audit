@@ -7,8 +7,13 @@ interface Props {
   layer: ResolvedLayer;
   highlightLayer?: string;
   highlightTool?: string;
+  /**
+   * Mode simulation : éléments sans lien, exposés au moteur (`data-node`) avec un emplacement pour
+   * la caption (mobile : elle s'affiche sous l'élément actif).
+   */
+  player?: boolean;
 }
-const { lang, layer, highlightLayer, highlightTool } = Astro.props;
+const { lang, layer, highlightLayer, highlightTool, player = false } = Astro.props;
 const current = layer.id === highlightLayer;
 ---
 
@@ -25,8 +30,8 @@ const current = layer.id === highlightLayer;
         const isTool = tool.id === highlightTool;
         const cls = ["block rounded-lg bg-accent-soft px-3 py-2 text-sm", isTool ? "outline-2 outline-accent" : ""];
         return (
-          <li>
-            {tool.href ? (
+          <li data-node={player ? tool.id : undefined}>
+            {tool.href && !player ? (
               <a
                 href={localePath(lang, tool.href)}
                 aria-current={isTool ? "page" : undefined}
@@ -39,11 +44,12 @@ const current = layer.id === highlightLayer;
                 <span class="block text-xs text-slate">{tool.category}</span>
               </a>
             ) : (
-              <span class:list={cls}>
+              <span class:list={[...cls, player && "node-item"]}>
                 <span class="font-semibold">{tool.name}</span>
                 <span class="block text-xs text-slate">{tool.category}</span>
               </span>
             )}
+            {player && <p class="sim-slot" data-caption-slot hidden aria-live="polite"></p>}
           </li>
         );
       })

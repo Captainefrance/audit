@@ -1,0 +1,34 @@
+---
+import { t, type Lang } from "../i18n";
+import type { ResolvedExternal } from "../lib/architecture";
+
+interface Props {
+  lang: Lang;
+  externals: ResolvedExternal[];
+  /** Mode simulation : éléments exposés au moteur, avec emplacement de caption. */
+  player?: boolean;
+}
+const { lang, externals, player = false } = Astro.props;
+---
+
+{
+  externals.length > 0 && (
+    <ul class="space-y-2">
+      {externals.map((ext) => (
+        <li data-node={player ? ext.id : undefined}>
+          <span
+            class:list={[
+              "external-item block rounded-full border-2 border-dashed px-4 py-2 text-sm",
+              `kind-${ext.kind}`,
+              player && "node-item",
+            ]}
+          >
+            <span class="font-semibold">{ext.name}</span>
+            <span class="ml-2 text-xs text-slate">{t(lang, "architecture.external")}</span>
+          </span>
+          {player && <p class="sim-slot" data-caption-slot hidden aria-live="polite" />}
+        </li>
+      ))}
+    </ul>
+  )
+}
