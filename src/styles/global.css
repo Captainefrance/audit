@@ -135,3 +135,65 @@ body {
   --diagram-link: var(--color-slate);
   --diagram-highlight: var(--color-accent);
 }
+
+/* Couleurs des effets d'interaction (variables : surchargeables plus tard). */
+:root {
+  --card-glow: rgb(29 78 137 / 0.1);
+  --card-shadow: 0 10px 28px -14px rgb(10 10 10 / 0.3);
+  --reading-progress-color: var(--color-accent);
+}
+
+/*
+ * Carte interactive : lueur qui suit le curseur (variables --mx/--my posées par
+ * src/scripts/spotlight.ts) + légère élévation. Souris seulement ; le focus clavier
+ * donne le même retour. Sous prefers-reduced-motion : pas de transition ni de mouvement.
+ */
+.spotlight {
+  position: relative;
+  isolation: isolate;
+  --mx: 50%;
+  --my: 50%;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  background: radial-gradient(
+    260px circle at var(--mx) var(--my),
+    var(--card-glow),
+    transparent 70%
+  );
+}
+.spotlight:focus-within {
+  box-shadow: var(--card-shadow);
+}
+.spotlight:focus-within::before {
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .spotlight:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--card-shadow);
+  }
+  .spotlight:hover::before {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spotlight,
+  .spotlight::before {
+    transition: none;
+  }
+  .spotlight:hover {
+    transform: none;
+  }
+}

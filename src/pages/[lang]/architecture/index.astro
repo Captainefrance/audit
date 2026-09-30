@@ -1,7 +1,8 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import ArchitectureDiagram from "../../../components/ArchitectureDiagram.astro";
-import { getLangStaticPaths, localePath, t, type Lang } from "../../../i18n";
+import ToolCard from "../../../components/ToolCard.astro";
+import { getLangStaticPaths, t, type Lang } from "../../../i18n";
 import { resolveArchitecture } from "../../../lib/architecture";
 
 export const getStaticPaths = getLangStaticPaths;
@@ -31,20 +32,16 @@ const hasContent = layers.some((l) => l.tools.length > 0);
             .map((layer) => (
               <div class="reveal-on-scroll">
                 <h3 class="text-sm font-semibold text-slate">{layer.name}</h3>
-                <ul class="mt-3 divide-y divide-slate-light rounded-lg border border-slate-light bg-white">
+                <ul class="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {layer.tools.map((tool) => (
-                    <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3">
-                      {tool.href ? (
-                        <a
-                          href={localePath(lang, tool.href)}
-                          class="font-medium text-ink transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                        >
-                          {tool.name}
-                        </a>
-                      ) : (
-                        <span class="font-medium text-ink">{tool.name}</span>
-                      )}
-                      <span class="text-sm text-slate">{tool.category}</span>
+                    <li>
+                      <ToolCard
+                        lang={lang}
+                        name={tool.name}
+                        category={tool.category}
+                        href={tool.href}
+                        draft={tool.draft}
+                      />
                     </li>
                   ))}
                 </ul>
