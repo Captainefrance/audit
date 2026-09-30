@@ -44,7 +44,13 @@ body {
  * dans le viewport. Dégradation propre si non supporté ou reduced-motion.
  */
 .reveal-on-scroll {
-  animation: reveal-on-scroll linear both;
+  /* Longhands volontairement incomplets (pas de delay, iteration-count…) : l'optimiseur CSS
+     ne peut pas les fondre en un raccourci `animation` contenant la timeline, que les
+     navigateurs plus anciens rejettent en bloc (l'effet disparaissait alors silencieusement). */
+  animation-name: reveal-on-scroll;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  animation-duration: auto;
   animation-timeline: view();
   animation-range: entry 0% cover 30%;
 }
