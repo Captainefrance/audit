@@ -47,7 +47,7 @@ const tags = [...new Set(items.flatMap((i) => i.entry.data.tags))].sort((a, b) =
       ) : (
         <>
           {tags.length > 0 && (
-            <div class="mt-8" data-news-filter hidden>
+            <div class="mt-8" data-news-filter>
               <p class="text-sm text-slate" id="news-filter-label">
                 {t(lang, "news.filter.label")}
               </p>
@@ -108,58 +108,18 @@ const tags = [...new Set(items.flatMap((i) => i.entry.data.tags))].sort((a, b) =
   </section>
 </BaseLayout>
 
-<script>
-  // Filtre par tag + pagination, côté client. Sans JS : toute la liste reste visible.
-  const root = document.querySelector<HTMLElement>("[data-news]");
-  if (root) {
-    const pageSize = Number(root.dataset.pageSize) || 12;
-    const cards = [...root.querySelectorAll<HTMLElement>("[data-news-card]")];
-    const filter = root.querySelector<HTMLElement>("[data-news-filter]");
-    const pager = root.querySelector<HTMLElement>("[data-news-pagination]");
-    const status = root.querySelector<HTMLElement>("[data-news-status]");
-    const pageLabel = root.querySelector<HTMLElement>("[data-page-label]");
-    const prev = root.querySelector<HTMLButtonElement>("[data-prev]");
-    const next = root.querySelector<HTMLButtonElement>("[data-next]");
-    const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-tag]")];
-    const fill = (tpl: string | undefined, values: Record<string, number>) =>
-      (tpl ?? "").replace(/\{(\w+)\}/g, (_, k) => String(values[k] ?? ""));
-
-    const params = new URLSearchParams(location.hash.slice(1));
-    let tag = params.get("tag") ?? "";
-    let page = Math.max(1, Number(params.get("page")) || 1);
-    if (!buttons.some((b) => b.dataset.tag === tag)) tag = "";
-
-    const render = () => {
-      const matches = cards.filter(
-        (c) => !tag || (c.dataset.tags ?? "").split("|").includes(tag),
-      );
-      const pages = Math.max(1, Math.ceil(matches.length / pageSize));
-      page = Math.min(page, pages);
-      const visible = new Set(matches.slice((page - 1) * pageSize, page * pageSize));
-      for (const c of cards) c.closest("li")!.hidden = !visible.has(c);
-      for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.tag === tag));
-      if (status) status.textContent = fill(root.dataset.countTemplate, { n: matches.length });
-      if (pager) pager.hidden = pages <= 1;
-      if (pageLabel) pageLabel.textContent = fill(root.dataset.pageTemplate, { p: page, n: pages });
-      if (prev) prev.disabled = page <= 1;
-      if (next) next.disabled = page >= pages;
-      const state = new URLSearchParams();
-      if (tag) state.set("tag", tag);
-      if (page > 1) state.set("page", String(page));
-      const hash = state.toString();
-      history.replaceState(null, "", hash ? `#${hash}` : location.pathname + location.search);
-    };
-
-    if (filter) filter.hidden = false;
-    for (const b of buttons) {
-      b.addEventListener("click", () => {
-        tag = b.dataset.tag ?? "";
-        page = 1;
-        render();
-      });
-    }
-    prev?.addEventListener("click", () => { page -= 1; render(); });
-    next?.addEventListener("click", () => { page += 1; render(); });
-    render();
+<style is:global>
+  /* Réserve la place du filtre avant que le JS ne l'active (pas de décalage de mise en page). */
+  [data-news-filter]:not([data-ready]) {
+    visibility: hidden;
   }
+  @media (scripting: none) {
+    [data-news-filter] {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import "../../../scripts/news-filter";
 </script>
