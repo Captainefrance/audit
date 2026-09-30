@@ -1,10 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
-
-// Pages conservées dans le repo mais hors navigation et hors index.
-const hiddenPages = ['/comparatif/', '/souverainete/', '/demo/'];
 
 // https://astro.build/config
 export default defineConfig({
@@ -18,13 +14,6 @@ export default defineConfig({
     '/a-propos': '/fr/a-propos/',
     '/architecture': '/fr/architecture/',
   },
-  integrations: [
-    sitemap({
-      filter: (page) =>
-        new URL(page).pathname !== '/' &&
-        !hiddenPages.some((p) => page.endsWith(p)),
-    }),
-  ],
   vite: {
     plugins: [tailwindcss()],
     // Pas de script inline (CSP sans 'unsafe-inline' pour les scripts) : toujours un fichier externe.

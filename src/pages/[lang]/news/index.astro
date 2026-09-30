@@ -2,6 +2,7 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import NewsCard from "../../../components/NewsCard.astro";
 import { format, getLangStaticPaths, localePath, t, type Lang } from "../../../i18n";
+import { pageTranslations } from "../../../i18n/pages";
 import { getNewsEntries, localize, sortByDateDesc } from "../../../lib/collections";
 
 export const getStaticPaths = getLangStaticPaths;
@@ -14,7 +15,7 @@ const tags = [...new Set(items.flatMap((i) => i.entry.data.tags))].sort((a, b) =
 );
 ---
 
-<BaseLayout title={t(lang, "news.title")} lang={lang} path="/news/">
+<BaseLayout title={t(lang, "news.title")} lang={lang} path="/news/" translations={pageTranslations.news}>
   <link
     slot="head"
     rel="alternate"

@@ -1,6 +1,6 @@
 import { getCollection } from "astro:content";
 import { layers, type Layer, type ToolNode } from "../data/architecture";
-import type { Lang } from "../i18n";
+import { defaultLang, locales, type Lang } from "../i18n";
 import { localize } from "./collections";
 
 export interface ResolvedTool {
@@ -74,4 +74,10 @@ export async function resolveArchitecture(lang: Lang): Promise<ResolvedLayer[]> 
     draft: Boolean(layer.draft),
     tools: visible(layer.tools).map(resolveTool(layer)),
   }));
+}
+
+/** Langues où la page /architecture a un vrai contenu (sinon : page « à venir » en FR seulement). */
+export async function architectureTranslations(): Promise<readonly Lang[]> {
+  const layers = await resolveArchitecture(defaultLang);
+  return layers.some((l) => l.tools.length > 0) ? locales : [defaultLang];
 }

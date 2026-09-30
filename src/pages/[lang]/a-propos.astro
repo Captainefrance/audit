@@ -1,12 +1,13 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { getLangStaticPaths, type Lang } from "../../i18n";
+import { pageTranslations } from "../../i18n/pages";
 
 export const getStaticPaths = getLangStaticPaths;
 const lang = Astro.params.lang as Lang;
 ---
 
-<BaseLayout title="À propos" lang={lang} path="/a-propos/" translations={["fr"]}>
+<BaseLayout title="À propos" lang={lang} path="/a-propos/" translations={pageTranslations.about}>
   <section class="reveal-on-scroll">
     <p class="text-sm font-medium text-accent">À propos</p>
     <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
