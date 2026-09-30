@@ -1,0 +1,219 @@
+---
+import { localePath, t, type Lang } from "../i18n";
+import type { ResolvedLayer } from "../lib/architecture";
+
+interface Props {
+  lang: Lang;
+  layers: ResolvedLayer[];
+  /** Couche mise en évidence (fiche outil). */
+  highlightLayer?: string;
+  /** Outil mis en évidence (fiche outil). */
+  highlightTool?: string;
+}
+const { lang, layers, highlightLayer, highlightTool } = Astro.props;
+
+// Géométrie du schéma (unités du viewBox).
+const W = 800;
+const PAD = 16; // marge intérieure d'une couche
+const LABEL_H = 22; // hauteur du titre de couche
+const NODE_H = 48;
+const NODE_GAP = 12;
+const LAYER_GAP = 44; // espace entre couches (contient la flèche)
+const nodeWidth = (name: string, category: string) =>
+  Math.min(300, Math.max(130, Math.max(name.length * 8.4, category.length * 6.6) + 32));
+
+let y = 0;
+const placed = layers.map((layer) => {
+  const rows: { tool: ResolvedLayer["tools"][number]; w: number }[][] = [[]];
+  let rowW = 0;
+  for (const tool of layer.tools) {
+    const w = nodeWidth(tool.name, tool.category);
+    const current = rows[rows.length - 1];
+    if (current.length > 0 && rowW + NODE_GAP + w > W - 2 * PAD) {
+      rows.push([]);
+      rowW = 0;
+    }
+    rows[rows.length - 1].push({ tool, w });
+    rowW += (rowW > 0 ? NODE_GAP : 0) + w;
+  }
+  const rowCount = layer.tools.length === 0 ? 0 : rows.length;
+  const height = PAD + LABEL_H + rowCount * NODE_H + Math.max(0, rowCount - 1) * NODE_GAP + PAD;
+  const top = y;
+  y += height + LAYER_GAP;
+  const nodes = rows.flatMap((row, r) => {
+    const total = row.reduce((s, n) => s + n.w, 0) + (row.length - 1) * NODE_GAP;
+    let x = (W - total) / 2;
+    return row.map(({ tool, w }) => {
+      const node = { tool, x, y: top + PAD + LABEL_H + r * (NODE_H + NODE_GAP), w };
+      x += w + NODE_GAP;
+      return node;
+    });
+  });
+  return { layer, top, height, nodes };
+});
+const H = Math.max(0, y - LAYER_GAP);
+const label = t(lang, "architecture.diagram.label");
+---
+
+<div class="architecture-diagram reveal-on-scroll">
+  <!-- ≥ md : schéma SVG -->
+  <svg
+    class="hidden h-auto w-full md:block"
+    viewBox={`0 0 ${W} ${H}`}
+    role="group"
+    aria-labelledby="arch-title"
+    aria-describedby="arch-desc"
+  >
+    <title id="arch-title">{label}</title>
+    <desc id="arch-desc">{t(lang, "architecture.diagram.desc")}</desc>
+    <defs>
+      <marker id="arch-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+        <path d="M0 0 L10 5 L0 10 z" fill="var(--diagram-link)"></path>
+      </marker>
+    </defs>
+
+    {
+      placed.map(({ layer, top, height }, i) => (
+        <g>
+          <rect
+            x="1"
+            y={top}
+            width={W - 2}
+            height={height}
+            rx="14"
+            fill="var(--diagram-layer-fill)"
+            stroke={layer.id === highlightLayer ? "var(--diagram-highlight)" : "var(--diagram-layer-stroke)"}
+            stroke-width={layer.id === highlightLayer ? 2.5 : 1.5}
+          ></rect>
+          <text
+            x={PAD + 4}
+            y={top + PAD + 6}
+            font-size="13"
+            font-weight="600"
+            fill={layer.id === highlightLayer ? "var(--diagram-highlight)" : "var(--diagram-text-muted)"}
+          >
+            {layer.name}
+          </text>
+          {i < placed.length - 1 && (
+            <line
+              x1={W / 2}
+              y1={top + height + 4}
+              x2={W / 2}
+              y2={top + height + LAYER_GAP - 4}
+              stroke="var(--diagram-link)"
+              stroke-width="1.5"
+              marker-end="url(#arch-arrow)"
+            ></line>
+          )}
+        </g>
+      ))
+    }
+
+    {
+      placed.flatMap(({ nodes }) =>
+        nodes.map(({ tool, x, y: ny, w }) => {
+          const current = tool.id === highlightTool;
+          const body = (
+            <>
+              <rect
+                class="node-box"
+                x={x}
+                y={ny}
+                width={w}
+                height={NODE_H}
+                rx="10"
+                fill="var(--diagram-node-fill)"
+                stroke={current ? "var(--diagram-highlight)" : "var(--diagram-node-stroke)"}
+                stroke-width="2.5"
+              ></rect>
+              <text x={x + w / 2} y={ny + 21} text-anchor="middle" font-size="14" font-weight="600" fill="var(--diagram-text)">
+                {tool.name}
+              </text>
+              <text x={x + w / 2} y={ny + 38} text-anchor="middle" font-size="11" fill="var(--diagram-text-muted)">
+                {tool.category}
+              </text>
+            </>
+          );
+          return tool.href ? (
+            <a
+              class="node node-link"
+              href={localePath(lang, tool.href)}
+              aria-label={`${tool.name} — ${tool.category}`}
+              aria-current={current ? "page" : undefined}
+            >
+              {body}
+            </a>
+          ) : (
+            <g class="node" aria-label={`${tool.name} — ${tool.category}`} role="img">
+              {body}
+            </g>
+          );
+        }),
+      )
+    }
+  </svg>
+
+  <!-- < md : liste verticale -->
+  <ol class="space-y-4 md:hidden" aria-label={label}>
+    {
+      layers.map((layer) => (
+        <li
+          class:list={[
+            "rounded-lg border-2 p-4",
+            layer.id === highlightLayer ? "border-accent" : "border-slate-light",
+          ]}
+          aria-current={layer.id === highlightLayer ? "true" : undefined}
+        >
+          <p class:list={["text-sm font-semibold", layer.id === highlightLayer ? "text-accent" : "text-slate"]}>
+            {layer.name}
+          </p>
+          <ul class="mt-3 space-y-2">
+            {layer.tools.map((tool) => {
+              const current = tool.id === highlightTool;
+              const cls = [
+                "block rounded-lg bg-accent-soft px-3 py-2 text-sm",
+                current ? "outline-2 outline-accent" : "",
+              ];
+              return (
+                <li>
+                  {tool.href ? (
+                    <a
+                      href={localePath(lang, tool.href)}
+                      aria-current={current ? "page" : undefined}
+                      class:list={[...cls, "transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"]}
+                    >
+                      <span class="font-semibold">{tool.name}</span>
+                      <span class="block text-xs text-slate">{tool.category}</span>
+                    </a>
+                  ) : (
+                    <span class:list={cls}>
+                      <span class="font-semibold">{tool.name}</span>
+                      <span class="block text-xs text-slate">{tool.category}</span>
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .architecture-diagram svg {
+    font-family: var(--font-sans);
+  }
+  .architecture-diagram .node-link {
+    cursor: pointer;
+  }
+  .architecture-diagram .node-link:hover .node-box {
+    stroke: var(--diagram-highlight);
+  }
+  .architecture-diagram .node-link:focus-visible {
+    outline: 2px solid var(--diagram-highlight);
+    outline-offset: 3px;
+    border-radius: 10px;
+  }
+</style>

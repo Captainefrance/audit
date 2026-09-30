@@ -1,0 +1,71 @@
+---
+import { getCollection, render } from "astro:content";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ArchitectureDiagram from "../../../components/ArchitectureDiagram.astro";
+import { getLangStaticPaths, localePath, t, type Lang } from "../../../i18n";
+import { resolveArchitecture } from "../../../lib/architecture";
+import { localize, translationInfo } from "../../../lib/collections";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("tools");
+  const paths = [];
+  for (const { params } of getLangStaticPaths()) {
+    const layers = await resolveArchitecture(params.lang);
+    for (const item of localize(entries, params.lang)) {
+      const layer = layers.find((l) => l.id === item.entry.data.layer);
+      const tool = layer?.tools.find((tl) => tl.id === item.slug);
+      // Outil ou couche masqués (draft) dans architecture.ts : pas de page.
+      if (layer && tool) {
+        paths.push({ params: { lang: params.lang, tool: item.slug }, props: { item, layer, tool } });
+      }
+    }
+  }
+  return paths;
+}
+
+const lang = Astro.params.lang as Lang;
+const { item, layer, tool } = Astro.props;
+const { entry } = item;
+const layers = await resolveArchitecture(lang);
+
+const { Content } = await render(entry);
+const { translated } = translationInfo(await getCollection("tools"), entry.data.translationKey);
+const path = `/architecture/${item.slug}/`;
+---
+
+<BaseLayout title={entry.data.name} lang={lang} path={path} translations={translated}>
+  <article>
+    <a
+      href={localePath(lang, "/architecture")}
+      class="text-sm text-slate transition-colors hover:text-accent"
+    >
+      ← {t(lang, "architecture.back")}
+    </a>
+    <header class="mt-6">
+      <p class="text-sm text-slate">
+        {t(lang, "architecture.layer")} : {layer.name} · {tool.category}
+      </p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        {entry.data.name}
+      </h1>
+    </header>
+
+    <div class="prose-content mt-8 max-w-2xl text-ink">
+      <Content />
+    </div>
+
+    <section class="mt-16" aria-labelledby="position">
+      <h2 id="position" class="text-lg font-semibold tracking-tight text-ink">
+        {t(lang, "architecture.position")}
+      </h2>
+      <div class="mt-6">
+        <ArchitectureDiagram
+          lang={lang}
+          layers={layers}
+          highlightLayer={layer.id}
+          highlightTool={tool.id}
+        />
+      </div>
+    </section>
+  </article>
+</BaseLayout>

@@ -1,0 +1,69 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import ArchitectureDiagram from "../../../components/ArchitectureDiagram.astro";
+import { getLangStaticPaths, localePath, t, type Lang } from "../../../i18n";
+import { resolveArchitecture } from "../../../lib/architecture";
+
+export const getStaticPaths = getLangStaticPaths;
+const lang = Astro.params.lang as Lang;
+const layers = await resolveArchitecture(lang);
+const hasContent = layers.some((l) => l.tools.length > 0);
+---
+
+{
+  hasContent ? (
+    <BaseLayout title={t(lang, "architecture.title")} lang={lang} path="/architecture/">
+      <h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+        {t(lang, "architecture.title")}
+      </h1>
+
+      <div class="mt-10">
+        <ArchitectureDiagram lang={lang} layers={layers} />
+      </div>
+
+      <section class="mt-16" aria-labelledby="tool-index">
+        <h2 id="tool-index" class="text-2xl font-semibold tracking-tight text-ink">
+          {t(lang, "architecture.index")}
+        </h2>
+        <div class="mt-6 space-y-8">
+          {layers
+            .filter((l) => l.tools.length > 0)
+            .map((layer) => (
+              <div class="reveal-on-scroll">
+                <h3 class="text-sm font-semibold text-slate">{layer.name}</h3>
+                <ul class="mt-3 divide-y divide-slate-light rounded-lg border border-slate-light bg-white">
+                  {layer.tools.map((tool) => (
+                    <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3">
+                      {tool.href ? (
+                        <a
+                          href={localePath(lang, tool.href)}
+                          class="font-medium text-ink transition-colors hover:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                        >
+                          {tool.name}
+                        </a>
+                      ) : (
+                        <span class="font-medium text-ink">{tool.name}</span>
+                      )}
+                      <span class="text-sm text-slate">{tool.category}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+        </div>
+      </section>
+    </BaseLayout>
+  ) : (
+    <BaseLayout title="Architecture" lang={lang} path="/architecture/" translations={["fr"]}>
+      <section class="reveal-on-scroll">
+        <p class="text-sm font-medium text-accent">Architecture</p>
+        <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
+          Architecture — à venir
+        </h1>
+        <p class="mt-4 max-w-2xl text-slate">
+          Le schéma d'architecture technique sera publié ici.
+        </p>
+      </section>
+    </BaseLayout>
+  )
+}

@@ -120,3 +120,18 @@ body {
   background: none;
   padding: 0;
 }
+
+/*
+ * Couleurs du schéma d'architecture, en variables pour pouvoir les surcharger
+ * (mode sombre plus tard) sans toucher au composant.
+ */
+:root {
+  --diagram-layer-fill: #ffffff;
+  --diagram-layer-stroke: var(--color-slate-light);
+  --diagram-node-fill: var(--color-accent-soft);
+  --diagram-node-stroke: transparent;
+  --diagram-text: var(--color-ink);
+  --diagram-text-muted: var(--color-slate);
+  --diagram-link: var(--color-slate);
+  --diagram-highlight: var(--color-accent);
+}

@@ -26,6 +26,16 @@ export const fr = {
   "news.page": "Page {p} sur {n}",
   "news.draft": "Brouillon",
   "news.tags": "Tags",
+  "nav.architecture": "Architecture",
+  "architecture.title": "Architecture du SI",
+  "architecture.index": "Index des outils",
+  "architecture.diagram.label": "Schéma de l'architecture du SI",
+  "architecture.diagram.desc": "Couches empilées du haut vers le bas ; chaque couche contient ses outils. Les outils avec une fiche sont cliquables.",
+  "architecture.layer": "Couche",
+  "architecture.category": "Catégorie",
+  "architecture.position": "Position dans l'architecture",
+  "architecture.back": "Retour à l'architecture",
+  "architecture.no_page": "Pas de fiche",
 } as const;
 
 export type Dict = Record<keyof typeof fr, string>;

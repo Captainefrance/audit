@@ -2,7 +2,7 @@ import { defineCollection } from "astro:content";
 import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 
-// Un fichier .md par entrée et par langue : src/content/news/{fr,en}/<slug>.md
+// Un fichier .md par entrée et par langue : src/content/<collection>/{fr,en}/<slug>.md
 // Les versions d'une même entrée partagent `translationKey`.
 const news = defineCollection({
   loader: glob({ pattern: "{fr,en}/**/*.md", base: "./src/content/news" }),
@@ -16,16 +16,15 @@ const news = defineCollection({
   }),
 });
 
+// Fiche outil : le nom de fichier (sans langue) doit être l'`id` de l'outil dans
+// src/data/architecture.ts, et `layer` l'id de sa couche (vérifié au build).
 const tools = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/tools" }),
+  loader: glob({ pattern: "{fr,en}/**/*.md", base: "./src/content/tools" }),
   schema: z.object({
-    nom: z.string(),
-    categorie: z.enum(["PAM", "EDR", "SIEM", "IAM", "backup", "reseau", "autre"]),
-    utilite: z.string(),
-    detail_technique: z.string(),
-    avis_perso: z.string(),
-    juridiction_hebergement: z.string(),
-    souverain: z.boolean(),
+    translationKey: z.string(),
+    name: z.string(),
+    layer: z.string(),
+    draft: z.boolean().default(false),
   }),
 });
 
