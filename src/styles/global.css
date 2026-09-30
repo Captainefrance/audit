@@ -52,7 +52,9 @@ body {
   animation-fill-mode: both;
   animation-duration: auto;
   animation-timeline: view();
-  animation-range: entry 0% cover 30%;
+  /* Fin de plage = élément entièrement entré : le dernier bloc d'une page courte, qui ne peut
+     plus défiler, atteint bien l'opacité 1 (avec `cover 30%` il restait à ~0,88, contraste < 4,5:1). */
+  animation-range: entry 0% entry 100%;
 }
 
 @keyframes reveal-on-scroll {
