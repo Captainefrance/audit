@@ -21,6 +21,7 @@ export async function GET(context: APIContext) {
     same("/", pageTranslations.home),
     same("/a-propos/", pageTranslations.about),
     same("/news/", pageTranslations.news),
+    same("/labo/", pageTranslations.labo),
     same("/architecture/", await architectureTranslations()),
   ];
 

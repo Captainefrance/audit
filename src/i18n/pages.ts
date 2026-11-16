@@ -9,4 +9,5 @@ export const pageTranslations = {
   home: ["fr"],
   about: ["fr"],
   news: ["fr", "en"],
+  labo: ["fr", "en"],
 } as const satisfies Record<string, readonly Lang[]>;

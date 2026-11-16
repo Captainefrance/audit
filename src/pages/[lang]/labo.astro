@@ -1,0 +1,75 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { format, getLangStaticPaths, t, type Lang } from "../../i18n";
+import { pageTranslations } from "../../i18n/pages";
+import { SCENARIOS } from "../../data/labo";
+import "@fontsource/geist-mono/400.css";
+import "@fontsource/geist-mono/500.css";
+import "@fontsource/geist-mono/600.css";
+import "../../styles/labo.css";
+
+export const getStaticPaths = getLangStaticPaths;
+const lang = Astro.params.lang as Lang;
+const levels = ["discovery", "analyst", "expert"] as const;
+---
+
+<BaseLayout title={t(lang, "labo.title")} description={t(lang, "labo.lead")} lang={lang} path="/labo/" translations={pageTranslations.labo}>
+  <div data-labo>
+    <div class="lab-hub" data-labo-hub>
+      <p class="text-sm font-medium text-accent">{t(lang, "labo.eyebrow")}</p>
+      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl" tabindex="-1">{t(lang, "labo.title")}</h1>
+      <p class="mt-4 max-w-2xl text-slate">{t(lang, "labo.lead")}</p>
+      <p class="lab-small-screen">{t(lang, "labo.small")}</p>
+
+      <div class="lab-cards">
+        {
+          SCENARIOS.map((s, i) => (
+            <article class="lab-card" data-scenario={s.id}>
+              <div>
+                <h2>{s.title[lang]}</h2>
+                <p class="mt-2 max-w-2xl text-slate">{s.summary[lang]}</p>
+                <p class="based mt-2">{t(lang, "labo.basedOn")}{s.basedOn[lang]}</p>
+              </div>
+              <ul class="lab-skills" aria-label="Compétences">
+                {s.skills.map((k) => <li>{k[lang]}</li>)}
+              </ul>
+              <fieldset class="lab-levels">
+                <legend>{t(lang, "labo.level")}</legend>
+                {levels.map((lv) => (
+                  <label class="lab-level">
+                    <input type="radio" name={`level-${i}`} id={`level-${s.id}-${lv}`} value={lv} checked={lv === "analyst"} />
+                    <span>
+                      <b>{t(lang, `labo.level.${lv}`)}</b>
+                      <span>{t(lang, `labo.level.${lv}.desc`)}</span>
+                    </span>
+                  </label>
+                ))}
+              </fieldset>
+              <div class="lab-start">
+                <button type="button" class="lab-btn" data-start>{t(lang, "labo.start")}</button>
+                <span class="text-sm text-slate">{t(lang, "labo.variants")}</span>
+              </div>
+              <p class="flex flex-wrap gap-x-4">
+                {levels.map((lv) => (
+                  <span class="lab-best" data-best={`${s.id}:${lv}`} data-tpl={`${t(lang, `labo.level.${lv}`)} · ${format(t(lang, "labo.best"), { n: "{n}" })}`} hidden />
+                ))}
+              </p>
+            </article>
+          ))
+        }
+      </div>
+
+      <section class="lab-method" aria-label={t(lang, "labo.title")}>
+        <div><h3>{t(lang, "labo.how1.title")}</h3><p>{t(lang, "labo.how1.text")}</p></div>
+        <div><h3>{t(lang, "labo.how2.title")}</h3><p>{t(lang, "labo.how2.text")}</p></div>
+        <div><h3>{t(lang, "labo.how3.title")}</h3><p>{t(lang, "labo.how3.text")}</p></div>
+      </section>
+    </div>
+
+    <div class="lab-game" data-labo-game hidden></div>
+  </div>
+</BaseLayout>
+
+<script>
+  import "../../scripts/labo/engine";
+</script>

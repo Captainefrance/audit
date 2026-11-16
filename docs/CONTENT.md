@@ -143,6 +143,19 @@ export default defineScenario({
 - **Lecture** : ne démarre jamais seule (bouton Lecture) ; absente avec `prefers-reduced-motion` (étapes manuelles).
   Clavier : Espace lecture/pause, ← → étapes, Début/Fin. Sur mobile, les éléments de la liste sont surlignés et la caption s'affiche sous l'élément actif.
 
+## Labo SOC (page `/labo`)
+
+Simulation d'incident : messagerie façon Outlook + console SIEM, horloge, attaquant qui progresse.
+
+- **Scénarios** : un fichier par scénario dans `src/data/labo/` (modèle : `aitm-bec.ts`), puis l'ajouter à la liste de
+  `src/data/labo/index.ts`. Le fichier décrit le contenu en FR et EN (messages, entités, événements datés, bruit) et ses règles
+  (menaces et échéances, jugement de chaque action, conseils du niveau Découverte, issue et plafond de score).
+- **Variantes** : tirées au début de chaque partie à partir d'une graine (`rng`) ; « Rejouer la même variante » réutilise la graine.
+- **Niveaux** : Découverte (conseils, lent, peu de bruit), Analyste, Expert (sans notifications, bruit fort, attaquant qui s'adapte).
+  Réglages communs dans `LEVEL_CFG` (`src/scripts/labo/engine.ts`).
+- **Textes d'interface** : `src/lib/labo/i18n.ts` (FR/EN) ; textes de la page : clés `labo.*` dans `src/i18n/`.
+- Société, personnes, domaines (`.example`) et adresses IP (plages de documentation) doivent rester fictifs.
+
 ## Pages hors navigation
 
 `/comparatif`, `/souverainete` et `/demo` restent dans le repo, sans lien de menu, en `noindex`, hors sitemap.
