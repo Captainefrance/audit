@@ -18,7 +18,7 @@ export async function GET(context: APIContext) {
       pubDate: entry.data.date,
       link: localePath(lang, `/news/${slug}`),
       categories: entry.data.tags,
-      description: entry.data.source.name,
+      description: entry.data.dek ?? entry.data.source.name,
     })),
   });
 }

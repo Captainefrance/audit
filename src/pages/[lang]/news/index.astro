@@ -1,126 +1,386 @@
 ---
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import NewsCard from "../../../components/NewsCard.astro";
+import NewsCover from "../../../components/NewsCover.astro";
 import { format, getLangStaticPaths, localePath, t, type Lang } from "../../../i18n";
 import { pageTranslations } from "../../../i18n/pages";
-import { getNewsEntries, localize, sortByDateDesc } from "../../../lib/collections";
+import { getNewsEntries, localize, pickFeatured, readSeconds, sortByDateDesc } from "../../../lib/collections";
 
 export const getStaticPaths = getLangStaticPaths;
 const lang = Astro.params.lang as Lang;
 
-const PAGE_SIZE = 12;
 const items = sortByDateDesc(localize(await getNewsEntries(), lang));
-const tags = [...new Set(items.flatMap((i) => i.entry.data.tags))].sort((a, b) =>
-  a.localeCompare(b, lang),
-);
+const une = pickFeatured(items);
+const rest = items.filter((i) => i !== une);
+const tags = [...new Set(items.flatMap((i) => i.entry.data.tags))];
+const count = (tag: string) => items.filter((i) => i.entry.data.tags.includes(tag)).length;
+
+const dateLocale = lang === "fr" ? "fr-FR" : "en-GB";
+const short = (d: Date) => new Intl.DateTimeFormat(dateLocale, { day: "numeric", month: "short", timeZone: "UTC" }).format(d);
+const long = (d: Date) => new Intl.DateTimeFormat(dateLocale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(d);
+const totalMin = Math.max(1, Math.ceil(items.reduce((s, i) => s + readSeconds(i.entry.data), 0) / 60));
+const rss = localePath(lang, "/news/rss.xml").replace(/\/$/, "");
 ---
 
 <BaseLayout title={t(lang, "news.title")} lang={lang} path="/news/" translations={pageTranslations.news}>
-  <link
-    slot="head"
-    rel="alternate"
-    type="application/rss+xml"
-    title={`${t(lang, "news.title")} (RSS)`}
-    href={localePath(lang, "/news/rss.xml").replace(/\/$/, "")}
-  />
-  <section
-    data-news
-    data-page-size={PAGE_SIZE}
-    data-count-template={t(lang, "news.count")}
-    data-page-template={t(lang, "news.page")}
-  >
-    <div class="flex flex-wrap items-baseline justify-between gap-4">
-      <h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-        {t(lang, "news.title")}
-      </h1>
-      <a
-        href={localePath(lang, "/news/rss.xml").replace(/\/$/, "")}
-        data-astro-reload
-        class="text-sm text-slate transition-colors hover:text-accent"
-      >
-        {t(lang, "news.rss")}
-      </a>
-    </div>
+  <link slot="head" rel="alternate" type="application/rss+xml" title={`${t(lang, "news.title")} (RSS)`} href={rss} />
+
+  <section class="nw" data-news data-count-template={t(lang, "news.count")}>
+    <header class="nw-mast">
+      <div class="nw-mast-top">
+        <h1>{t(lang, "news.title")}</h1>
+        {
+          items.length > 0 && (
+            <p class="nw-meta">
+              <b>{format(t(lang, "news.updated"), { d: long(items[0].entry.data.date) })}</b>
+              <br />
+              {format(t(lang, "news.meta"), { n: items.length, m: totalMin, s: items.length > 1 ? "s" : "" })} ·{" "}
+              <a href={rss} data-astro-reload>RSS</a>
+            </p>
+          )
+        }
+      </div>
+      {
+        tags.length > 1 && (
+          <div class="nw-chips" role="group" aria-label={t(lang, "news.filter.label")} data-news-filter>
+            <span class="nw-pill" aria-hidden="true" />
+            {["", ...tags].map((tag) => (
+              <button type="button" class="nw-chip" data-tag={tag} aria-pressed={tag === "" ? "true" : "false"}>
+                {tag || t(lang, "news.filter.all")}
+                {tag && <span class="nw-n">{count(tag)}</span>}
+              </button>
+            ))}
+          </div>
+        )
+      }
+    </header>
+
+    {items.length === 0 && <p class="nw-empty">{t(lang, "news.empty")}</p>}
 
     {
-      items.length === 0 ? (
-        <p class="mt-10 text-slate">{t(lang, "news.empty")}</p>
-      ) : (
+      une && (
+        <article class="nw-une nw-item" data-tags={une.entry.data.tags.join("|")}>
+          <NewsCover kind={une.entry.data.cover} name={`cv-${une.slug}`} class="nw-une-cover" />
+          <div>
+            <p class="nw-kicker">
+              <span class="nw-tag">{une.entry.data.tags.join(" · ")}</span>
+              <span class="nw-dot" />
+              <time datetime={une.entry.data.date.toISOString().slice(0, 10)}>{short(une.entry.data.date)}</time>
+            </p>
+            <h2 transition:name={`t-${une.slug}`}>
+              <a href={localePath(lang, `/news/${une.slug}`)} class="nw-link">{une.entry.data.title}</a>
+            </h2>
+            {une.entry.data.dek && <p class="nw-dek">{une.entry.data.dek}</p>}
+            <span class="nw-read" aria-hidden="true">
+              {format(t(lang, "news.read"), { t: `${readSeconds(une.entry.data)} s` })} <span>→</span>
+            </span>
+          </div>
+        </article>
+      )
+    }
+
+    {
+      rest.length > 0 && (
         <>
-          {tags.length > 0 && (
-            <div class="mt-8" data-news-filter>
-              <p class="text-sm text-slate" id="news-filter-label">
-                {t(lang, "news.filter.label")}
-              </p>
-              <ul class="mt-2 flex flex-wrap gap-2" aria-labelledby="news-filter-label">
-                {[null, ...tags].map((tag) => (
-                  <li>
-                    <button
-                      type="button"
-                      data-tag={tag ?? ""}
-                      aria-pressed={tag === null ? "true" : "false"}
-                      class="rounded-full border border-slate-light px-3 py-1 text-sm text-slate transition-colors hover:border-accent hover:text-accent aria-pressed:border-accent aria-pressed:bg-accent-soft aria-pressed:text-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-                    >
-                      {tag ?? t(lang, "news.filter.all")}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          <p class="mt-6 text-sm text-slate" data-news-status role="status" aria-live="polite">
-            {format(t(lang, "news.count"), { n: items.length })}
-          </p>
-
-          <ul class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map(({ entry, slug }) => (
-              <li>
-                <NewsCard
-                  lang={lang}
-                  slug={slug}
-                  title={entry.data.title}
-                  date={entry.data.date}
-                  sourceName={entry.data.source.name}
-                  tags={entry.data.tags}
-                  draft={entry.data.draft}
-                />
+          <div class="nw-grid-head">
+            <span>{t(lang, "news.latest")}</span>
+            <span data-news-status role="status" aria-live="polite">
+              {format(t(lang, "news.count"), { n: items.length, s: items.length > 1 ? "s" : "" })}
+            </span>
+          </div>
+          <ul class="nw-grid">
+            {rest.map(({ entry, slug }) => (
+              <li class="nw-card nw-item" data-tags={entry.data.tags.join("|")}>
+                <NewsCover kind={entry.data.cover} name={`cv-${slug}`} />
+                <p class="nw-kicker">
+                  <span class="nw-tag">{entry.data.tags.join(" · ")}</span>
+                  <span class="nw-dot" />
+                  <time datetime={entry.data.date.toISOString().slice(0, 10)}>{short(entry.data.date)}</time>
+                  {entry.data.draft && <span class="nw-draft">{t(lang, "news.draft")}</span>}
+                </p>
+                <h3 transition:name={`t-${slug}`}>
+                  <a href={localePath(lang, `/news/${slug}`)} class="nw-link">{entry.data.title}</a>
+                </h3>
+                {entry.data.dek && <p class="nw-dek">{entry.data.dek}</p>}
               </li>
             ))}
           </ul>
-
-          <nav
-            class="mt-10 flex items-center justify-center gap-4 text-sm"
-            aria-label={t(lang, "news.pagination")}
-            data-news-pagination
-            hidden
-          >
-            <button type="button" data-prev class="rounded-full border border-slate-light px-4 py-1.5 text-slate transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:hover:border-slate-light disabled:hover:text-slate focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-              {t(lang, "news.prev")}
-            </button>
-            <span data-page-label class="text-slate"></span>
-            <button type="button" data-next class="rounded-full border border-slate-light px-4 py-1.5 text-slate transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:hover:border-slate-light disabled:hover:text-slate focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
-              {t(lang, "news.next")}
-            </button>
-          </nav>
         </>
       )
     }
+    <p class="nw-empty" data-news-empty hidden>{t(lang, "news.filter.empty")}</p>
   </section>
 </BaseLayout>
-
-<style is:global>
-  /* Réserve la place du filtre avant que le JS ne l'active (pas de décalage de mise en page). */
-  [data-news-filter]:not([data-ready]) {
-    visibility: hidden;
-  }
-  @media (scripting: none) {
-    [data-news-filter] {
-      display: none;
-    }
-  }
-</style>
 
 <script>
   import "../../../scripts/news-filter";
 </script>
+
+<style>
+  .nw {
+    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    margin-top: -1.5rem;
+  }
+  .nw-mast {
+    display: grid;
+    gap: 1.25rem;
+  }
+  .nw-mast-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 2px solid var(--color-ink);
+  }
+  .nw-mast h1 {
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-weight: 600;
+    line-height: 0.9;
+    letter-spacing: -0.05em;
+  }
+  .nw-meta {
+    font: 12px/1.6 "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: right;
+    color: #6b7280;
+  }
+  .nw-meta b {
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+  .nw-meta a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .nw-chips {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .nw-chip {
+    position: relative;
+    z-index: 1;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    color: var(--color-slate);
+    cursor: pointer;
+    transition: color 0.25s ease;
+  }
+  .nw-chip:hover {
+    color: var(--color-ink);
+  }
+  .nw-chip[aria-pressed="true"] {
+    color: var(--color-paper);
+  }
+  .nw-chip:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .nw-n {
+    margin-left: 4px;
+    font: 11px "Geist Mono", ui-monospace, monospace;
+    opacity: 0.6;
+  }
+  .nw-pill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 0;
+    height: 0;
+    border-radius: 999px;
+    background: var(--color-ink);
+  }
+  .nw-chips[data-ready] .nw-pill {
+    transition: transform 0.45s var(--ease), width 0.45s var(--ease);
+  }
+  /* Sans JavaScript, le filtre ne sert à rien : on le masque. */
+  @media (scripting: none) {
+    .nw-chips {
+      display: none;
+    }
+  }
+
+  .nw-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font: 500 11px/1 "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .nw-tag {
+    color: var(--color-accent);
+  }
+  .nw-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+  }
+  .nw-draft {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+  .nw-link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+  .nw-link:focus-visible {
+    outline: none;
+  }
+  .nw-item:has(.nw-link:focus-visible) {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 6px;
+    border-radius: 1.25rem;
+  }
+  .nw-item {
+    position: relative;
+  }
+  .nw-item:hover :global(.news-cover svg) {
+    transform: scale(1.04);
+  }
+  .nw-dek {
+    color: var(--color-slate);
+  }
+
+  .nw-une {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 2rem;
+    align-items: center;
+    margin-top: 1.75rem;
+  }
+  .nw-une :global(.nw-une-cover) {
+    border-radius: 1.25rem;
+  }
+  .nw-une h2 {
+    margin-top: 0.75rem;
+    font-size: clamp(1.8rem, 3.4vw, 2.5rem);
+    font-weight: 600;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .nw-une .nw-dek {
+    margin-top: 0.9rem;
+    font-size: 1.1rem;
+  }
+  .nw-read {
+    display: inline-flex;
+    gap: 8px;
+    margin-top: 1.1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+  .nw-read span {
+    transition: transform 0.25s var(--ease);
+  }
+  .nw-une:hover .nw-read span {
+    transform: translateX(4px);
+  }
+
+  .nw-grid-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-top: 3.5rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--color-slate-light);
+    font: 500 11px "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .nw-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2.25rem 1.5rem;
+    margin-top: 1.25rem;
+  }
+  .nw-card {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+  }
+  .nw-card h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  .nw-card .nw-dek {
+    font-size: 0.95rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .nw-item[hidden] {
+    display: none;
+  }
+  .nw-empty {
+    margin-top: 2.5rem;
+    color: var(--color-slate);
+  }
+
+  @keyframes nw-up {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+  .nw-une,
+  .nw-card {
+    animation: nw-up 0.7s var(--ease) both;
+  }
+  .nw-card:nth-child(2) { animation-delay: 0.06s; }
+  .nw-card:nth-child(3) { animation-delay: 0.12s; }
+  .nw-card:nth-child(n + 4) { animation-delay: 0.18s; }
+
+  @media (max-width: 860px) {
+    .nw-une {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
+    }
+    .nw-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 560px) {
+    .nw {
+      margin-top: -2rem;
+    }
+    .nw-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .nw-meta {
+      text-align: left;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nw-une,
+    .nw-card {
+      animation: none;
+    }
+    .nw-chips[data-ready] .nw-pill,
+    .nw-read span,
+    .nw-chip {
+      transition: none;
+    }
+  }
+</style>

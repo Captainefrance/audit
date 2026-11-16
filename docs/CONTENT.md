@@ -13,19 +13,28 @@ Les brouillons (`draft: true`) sont visibles avec `npm run dev` et absents du bu
    ```yaml
    ---
    translationKey: mon-article        # identique dans toutes les langues
-   title: "Titre"
-   date: 2026-03-15
+   title: "Titre court"
+   dek: "Une phrase d'accroche."      # sous le titre, sur les cartes et l'article
+   date: 2026-03-15                   # date de l'actualité (tri décroissant)
    source:
      name: Nom de la source
      url: https://exemple.org/article
-   tags: [tag-un, tag-deux]           # alimente le filtre de la liste
+   tags: [Ransomware]                 # alimente le filtre (un thème = un tag)
+   cover: patch                       # illustration : cold, patch, containers, transfer, chart, cloud, dots
+   featured: false                    # true = affichée en « Une » (sinon la plus récente)
+   points:                            # « L'essentiel », 3 points max
+     - "Premier fait."
+     - "Deuxième fait."
+     - "Troisième fait."
+   why: "Pourquoi ça compte, en une phrase."
    draft: false
    ---
    ```
 
-3. Le corps Markdown est le commentaire personnel. Il peut rester vide.
+3. Le corps Markdown est un commentaire facultatif, affiché sous « Pourquoi ça compte ». Il peut rester vide.
 
-La liste (tri par date décroissante, filtre par tag, pagination au-delà de 12), le flux RSS (`/<lang>/news/rss.xml`) et le sitemap se mettent à jour seuls.
+La liste (Une, grille, filtre par thème), la navigation entre brèves (← → au clavier), le flux RSS (`/<lang>/news/rss.xml`) et le sitemap se mettent à jour seuls.
+Pour un nouveau motif d'illustration : ajouter une fonction dans `src/components/NewsCover.astro` et son nom dans l'enum `cover` de `src/content.config.ts`.
 
 ## Ajouter une traduction
 

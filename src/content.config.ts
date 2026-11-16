@@ -12,6 +12,16 @@ const news = defineCollection({
     date: z.coerce.date(),
     source: z.object({ name: z.string(), url: z.url() }),
     tags: z.array(z.string()).default([]),
+    /** Une phrase d'accroche sous le titre (cartes et article). */
+    dek: z.string().optional(),
+    /** « L'essentiel » : 3 points courts au maximum. */
+    points: z.array(z.string()).max(3).default([]),
+    /** « Pourquoi ça compte » : une phrase d'analyse. */
+    why: z.string().optional(),
+    /** Illustration générée (voir src/components/NewsCover.astro). */
+    cover: z.enum(["cold", "patch", "containers", "transfer", "chart", "cloud", "dots"]).default("dots"),
+    /** Affichée en « Une » en haut de la liste (sinon : la plus récente). */
+    featured: z.boolean().default(false),
     draft: z.boolean().default(false),
   }),
 });

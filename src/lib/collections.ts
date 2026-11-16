@@ -82,3 +82,21 @@ export function sortByDateDesc<I extends { entry: { data: { date: Date } } }>(it
     (a, b) => b.entry.data.date.getTime() - a.entry.data.date.getTime(),
   );
 }
+
+interface NewsReadable {
+  title: string;
+  dek?: string;
+  points: string[];
+  why?: string;
+}
+
+/** Temps de lecture d'une brève, en secondes (arrondi à 5 s, 15 s minimum). */
+export function readSeconds(d: NewsReadable): number {
+  const words = [d.title, d.dek ?? "", ...d.points, d.why ?? ""].join(" ").split(/\s+/).filter(Boolean).length;
+  return Math.max(15, Math.round(words / 3.3 / 5) * 5);
+}
+
+/** La « Une » : la brève marquée `featured` la plus récente, sinon la plus récente tout court. */
+export function pickFeatured<I extends { entry: { data: { featured: boolean } } }>(sorted: I[]): I | undefined {
+  return sorted.find((i) => i.entry.data.featured) ?? sorted[0];
+}

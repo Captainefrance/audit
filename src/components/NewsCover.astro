@@ -1,0 +1,171 @@
+---
+/**
+ * Illustration générée d'une brève : un motif par thème (champ `cover` du front matter),
+ * rendu en SVG au build, déterministe, animé en CSS (coupé en mouvement réduit).
+ */
+interface Props {
+  kind: string;
+  /** Nom de transition partagé entre la carte et l'article (morphing entre les pages). */
+  name: string;
+  class?: string;
+}
+const { kind, name, class: cls = "" } = Astro.props;
+
+const C = { wash: "#F1F6FC", soft: "#DCE8F5", line: "#CFDDEE", mid: "#4F7FBF", accent: "#1D4E89", navy: "#0F1B2D", red: "#D9412F", warm: "#F3B6A8" };
+
+function seeded(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+const COVERS: Record<string, () => string> = {
+  // La chaîne du froid : des casiers froids, quelques-uns en surchauffe.
+  cold() {
+    const R = seeded(11);
+    let s = "";
+    for (let y = 0; y < 6; y++)
+      for (let x = 0; x < 12; x++) {
+        const hot = R() < 0.17, px = 22 + x * 30, py = 32 + y * 32;
+        s += `<rect x="${px}" y="${py}" width="24" height="26" rx="5" fill="${hot ? C.red : "#fff"}" stroke="${hot ? C.red : C.line}"${hot ? ` class="c-pulse" style="animation-delay:${(R() * 2).toFixed(2)}s"` : ""}/>`;
+        if (!hot) s += `<line x1="${px + 6}" y1="${py + 8}" x2="${px + 18}" y2="${py + 8}" stroke="${C.soft}" stroke-width="2" stroke-linecap="round"/>`;
+      }
+    return s;
+  },
+  // Des centaines de failles, une seule exploitée.
+  patch() {
+    const R = seeded(5);
+    let s = "";
+    for (let y = 0; y < 13; y++)
+      for (let x = 0; x < 30; x++)
+        s += `<circle cx="${(20 + x * 12.4).toFixed(1)}" cy="${(30 + y * 15.5).toFixed(1)}" r="${(1.6 + R() * 1.2).toFixed(1)}" fill="${C.mid}" opacity="${(0.22 + R() * 0.4).toFixed(2)}"/>`;
+    const cx = 20 + 21 * 12.4, cy = 30 + 5 * 15.5;
+    return s + `<circle cx="${cx}" cy="${cy}" r="10" fill="none" stroke="${C.red}" stroke-width="1.5" class="c-ring"/><circle cx="${cx}" cy="${cy}" r="5" fill="${C.red}"/>`;
+  },
+  // Une pile de conteneurs, un seul ouvert.
+  containers() {
+    const R = seeded(3), shades = ["#BFD2EA", "#9DB6D6", "#DCE8F5", "#7E9FC9"];
+    let s = "";
+    for (let y = 0; y < 5; y++)
+      for (let x = 0; x < 6; x++) {
+        const px = 30 + x * 58, py = 40 + y * 36, odd = x === 3 && y === 2;
+        s += `<g${odd ? ` class="c-pulse"` : ""}><rect x="${px}" y="${py}" width="54" height="32" rx="3" fill="${odd ? "#fff" : shades[Math.floor(R() * 4)]}" stroke="${odd ? C.red : "rgba(255,255,255,.7)"}" stroke-width="${odd ? 2 : 1}"/>`;
+        for (let k = 1; k < 6; k++) s += `<line x1="${px + k * 9}" y1="${py + 5}" x2="${px + k * 9}" y2="${py + 27}" stroke="${odd ? C.warm : "rgba(255,255,255,.55)"}" stroke-width="1"/>`;
+        s += "</g>";
+      }
+    return s;
+  },
+  // Des flux normaux depuis la banque, un flux détourné.
+  transfer() {
+    let s = `<circle cx="90" cy="125" r="34" fill="#fff" stroke="${C.accent}" stroke-width="2"/><circle cx="90" cy="125" r="8" fill="${C.accent}"/>`;
+    for (const y of [40, 72, 104, 146, 178, 210])
+      s += `<path d="M124 125 C 210 125, 230 ${y}, 320 ${y}" fill="none" stroke="${C.line}" stroke-width="1.5"/><circle cx="326" cy="${y}" r="6" fill="#fff" stroke="${C.mid}" stroke-width="1.5"/>`;
+    return s + `<path d="M120 140 C 190 190, 240 236, 380 240" fill="none" stroke="${C.red}" stroke-width="2.2" class="c-dash"/><circle cx="372" cy="239" r="5" fill="${C.red}"/>`;
+  },
+  // Une tendance : douze mois, le dernier en rouge.
+  chart() {
+    const v = [52, 58, 55, 63, 60, 66, 64, 70, 68, 74, 79, 100];
+    return v
+      .map((h, i) => {
+        const bh = h * 1.7;
+        return `<rect class="c-bar" style="animation-delay:${i * 0.04}s" x="${30 + i * 29}" y="${222 - bh}" width="20" height="${bh}" rx="3" fill="${i === 11 ? C.red : C.soft}"/>`;
+      })
+      .join("");
+  },
+  // Six zones d'hébergement, quatre chiffrées.
+  cloud() {
+    let s = "";
+    for (let i = 0; i < 6; i++) {
+      const x = 40 + (i % 3) * 112, y = 40 + Math.floor(i / 3) * 92, down = i !== 2 && i !== 4;
+      s += `<rect x="${x}" y="${y}" width="96" height="76" rx="12" fill="${down ? C.navy : "#fff"}" stroke="${down ? C.navy : C.line}"/>`;
+      s += down
+        ? `<g transform="translate(${x + 36} ${y + 24})"><g class="c-pulse" style="animation-delay:${i * 0.3}s"><path d="M5 12 V8 a7 7 0 0 1 14 0 V12" fill="none" stroke="${C.red}" stroke-width="2.2"/><rect x="1" y="12" width="22" height="16" rx="3" fill="${C.red}"/></g></g>`
+        : `<circle cx="${x + 48}" cy="${y + 38}" r="7" fill="#fff" stroke="${C.mid}" stroke-width="2"/><circle cx="${x + 48}" cy="${y + 38}" r="2.5" fill="${C.mid}"/>`;
+    }
+    return s;
+  },
+  // Motif par défaut : une trame de points.
+  dots() {
+    const R = seeded(9);
+    let s = "";
+    for (let y = 0; y < 9; y++)
+      for (let x = 0; x < 18; x++)
+        s += `<circle cx="${30 + x * 20}" cy="${45 + y * 20}" r="${(1.5 + R() * 1.5).toFixed(1)}" fill="${C.mid}" opacity="${(0.2 + R() * 0.45).toFixed(2)}"/>`;
+    return s;
+  },
+};
+
+const svg = `<rect width="400" height="250" fill="${C.wash}"/>${(COVERS[kind] ?? COVERS.dots)()}`;
+---
+
+<div class:list={["news-cover", cls]} transition:name={name}>
+  <svg viewBox="0 0 400 250" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false" set:html={svg} />
+</div>
+
+<style>
+  .news-cover {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    aspect-ratio: 16 / 10;
+    border-radius: 1rem;
+    background: #f1f6fc;
+  }
+  .news-cover svg {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .news-cover :global(.c-pulse) {
+    animation: c-pulse 2.4s ease-in-out infinite;
+  }
+  .news-cover :global(.c-ring) {
+    animation: c-ring 2s ease-out infinite;
+  }
+  .news-cover :global(.c-dash) {
+    stroke-dasharray: 6 6;
+    animation: c-dash 1.2s linear infinite;
+  }
+  .news-cover :global(.c-bar) {
+    transform-box: fill-box;
+    transform-origin: bottom;
+    animation: c-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  @keyframes c-pulse {
+    50% {
+      opacity: 0.45;
+    }
+  }
+  @keyframes c-ring {
+    from {
+      r: 4;
+      opacity: 0.9;
+    }
+    to {
+      r: 22;
+      opacity: 0;
+    }
+  }
+  @keyframes c-dash {
+    to {
+      stroke-dashoffset: -40;
+    }
+  }
+  @keyframes c-grow {
+    from {
+      transform: scaleY(0);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .news-cover svg,
+    .news-cover :global(*) {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>

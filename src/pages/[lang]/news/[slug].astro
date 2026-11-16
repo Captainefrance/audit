@@ -1,69 +1,328 @@
 ---
 import { render } from "astro:content";
 import BaseLayout from "../../../layouts/BaseLayout.astro";
-import ReadingProgress from "../../../components/ReadingProgress.astro";
+import NewsCover from "../../../components/NewsCover.astro";
 import { formatDate, getLangStaticPaths, localePath, locales, t, type Lang } from "../../../i18n";
-import { getNewsEntries, localize, translationInfo } from "../../../lib/collections";
+import { getNewsEntries, localize, readSeconds, sortByDateDesc, translationInfo } from "../../../lib/collections";
 
 export async function getStaticPaths() {
   const entries = await getNewsEntries();
-  return getLangStaticPaths().flatMap(({ params }) =>
-    localize(entries, params.lang).map((item) => ({
+  return getLangStaticPaths().flatMap(({ params }) => {
+    const list = sortByDateDesc(localize(entries, params.lang));
+    return list.map((item, i) => ({
       params: { lang: params.lang, slug: item.slug },
-      props: { item },
-    })),
-  );
+      props: {
+        item,
+        prev: list[i - 1] ? { slug: list[i - 1].slug, title: list[i - 1].entry.data.title } : null,
+        next: list[i + 1] ? { slug: list[i + 1].slug, title: list[i + 1].entry.data.title } : null,
+      },
+    }));
+  });
 }
 
 const lang = Astro.params.lang as Lang;
-const { item } = Astro.props;
+const { item, prev, next } = Astro.props;
 const { entry } = item;
+const d = entry.data;
 const { Content } = await render(entry);
+const hasBody = Boolean(entry.body?.trim());
 
-const { slugs, translated } = translationInfo(await getNewsEntries(), entry.data.translationKey);
+const { slugs, translated } = translationInfo(await getNewsEntries(), d.translationKey);
 const pathByLang = Object.fromEntries(locales.map((l) => [l, `/news/${slugs[l]}/`]));
+const listUrl = localePath(lang, "/news");
 ---
 
-<BaseLayout
-  title={entry.data.title}
-  lang={lang}
-  path={`/news/${item.slug}/`}
-  pathByLang={pathByLang}
-  translations={translated}
->
-  <ReadingProgress />
-  <article>
-    <a href={localePath(lang, "/news")} class="text-sm text-slate transition-colors hover:text-accent">
-      ← {t(lang, "news.back")}
-    </a>
-    <header class="mt-6" transition:name={`news-${item.slug}`}>
-      <p class="text-sm text-slate">
-        {t(lang, "news.published")}
-        <time datetime={entry.data.date.toISOString().slice(0, 10)}>{formatDate(lang, entry.data.date)}</time>
-      </p>
-      <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-        {entry.data.title}
-      </h1>
-      <p class="mt-4 text-sm text-slate">
-        {t(lang, "news.source")} :
-        <a
-          href={entry.data.source.url}
-          rel="noopener noreferrer"
-          class="text-accent underline underline-offset-2"
-        >{entry.data.source.name}</a>
-      </p>
-      {
-        entry.data.tags.length > 0 && (
-          <ul class="mt-4 flex flex-wrap gap-2 text-xs" aria-label={t(lang, "news.tags")}>
-            {entry.data.tags.map((tag) => (
-              <li class="rounded-full border border-slate-light px-2 py-0.5 text-slate">{tag}</li>
+<BaseLayout title={d.title} description={d.dek} lang={lang} path={`/news/${item.slug}/`} pathByLang={pathByLang} translations={translated}>
+  <article class="na" data-news-article data-list={listUrl} data-prev={prev ? localePath(lang, `/news/${prev.slug}`) : ""} data-next={next ? localePath(lang, `/news/${next.slug}`) : ""}>
+    <a href={listUrl} class="na-back"><span aria-hidden="true">←</span> {t(lang, "news.title")}</a>
+
+    <p class="na-kicker">
+      <span class="na-tag">{d.tags.join(" · ")}</span>
+      <span class="na-dot"></span>
+      <time datetime={d.date.toISOString().slice(0, 10)}>{formatDate(lang, d.date)}</time>
+      <span class="na-dot"></span>
+      <span>{readSeconds(d)} s</span>
+      {d.draft && <span class="na-draft">{t(lang, "news.draft")}</span>}
+    </p>
+    <h1 transition:name={`t-${item.slug}`}>{d.title}</h1>
+    <NewsCover kind={d.cover} name={`cv-${item.slug}`} class="na-cover" />
+
+    {
+      d.points.length > 0 && (
+        <section class="na-essential na-in">
+          <h2>{t(lang, "news.essential")}</h2>
+          <ol>
+            {d.points.map((p) => (
+              <li>{p}</li>
             ))}
-          </ul>
-        )
-      }
-    </header>
-    <div class="prose-content mt-8 max-w-2xl text-ink">
-      <Content />
-    </div>
+          </ol>
+        </section>
+      )
+    }
+    {
+      d.why && (
+        <section class="na-why na-in">
+          <h2>{t(lang, "news.why")}</h2>
+          <p>{d.why}</p>
+        </section>
+      )
+    }
+    {
+      hasBody && (
+        <div class="prose-content na-body na-in">
+          <Content />
+        </div>
+      )
+    }
+    <p class="na-src na-in">
+      {t(lang, "news.source")} :{" "}
+      <a href={d.source.url} rel="noopener noreferrer" target="_blank">{d.source.name} <span aria-hidden="true">↗</span></a>
+    </p>
+
+    {
+      (prev || next) && (
+        <nav class="na-pager" aria-label={t(lang, "news.others")}>
+          {prev ? (
+            <a href={localePath(lang, `/news/${prev.slug}`)} rel="prev">
+              <small>← {t(lang, "news.prevItem")}</small>
+              <b>{prev.title}</b>
+            </a>
+          ) : (
+            <span />
+          )}
+          {next && (
+            <a href={localePath(lang, `/news/${next.slug}`)} rel="next" class="na-next">
+              <small>{t(lang, "news.nextItem")} →</small>
+              <b>{next.title}</b>
+            </a>
+          )}
+        </nav>
+      )
+    }
+    <p class="na-keys" aria-hidden="true">{t(lang, "news.keys")}</p>
   </article>
 </BaseLayout>
+
+<script>
+  import { navigate } from "astro:transitions/client";
+  import { onPageLoad } from "../../../lib/page-lifecycle";
+
+  // Raccourcis : ← → brève précédente / suivante, Échap retour à la liste.
+  onPageLoad((signal) => {
+    const el = document.querySelector<HTMLElement>("[data-news-article]");
+    if (!el) return;
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+        if ((e.target as HTMLElement).closest("input, textarea, select, [contenteditable]")) return;
+        const to = e.key === "ArrowLeft" ? el.dataset.prev : e.key === "ArrowRight" ? el.dataset.next : e.key === "Escape" ? el.dataset.list : "";
+        if (to) {
+          e.preventDefault();
+          navigate(to);
+        }
+      },
+      { signal },
+    );
+  });
+</script>
+
+<style>
+  .na {
+    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    max-width: 760px;
+    margin: -1.5rem auto 0;
+  }
+  .na-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px 7px 12px;
+    border: 1px solid var(--color-slate-light);
+    border-radius: 999px;
+    background: #fff;
+    font-size: 0.875rem;
+    color: var(--color-slate);
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .na-back:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+  .na-kicker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2rem;
+    font: 500 11px/1 "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .na-tag {
+    color: var(--color-accent);
+  }
+  .na-dot {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.5;
+  }
+  .na-draft {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+  }
+  .na h1 {
+    margin-top: 0.9rem;
+    font-size: clamp(2rem, 4.6vw, 3.1rem);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .na :global(.na-cover) {
+    margin-top: 1.75rem;
+    aspect-ratio: 2 / 1;
+    border-radius: 1.4rem;
+  }
+  .na h2 {
+    margin-bottom: 0.5rem;
+    font: 500 11px "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .na-essential {
+    margin-top: 2.25rem;
+  }
+  .na-essential ol {
+    counter-reset: k;
+  }
+  .na-essential li {
+    counter-increment: k;
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 8px;
+    padding: 1rem 0;
+    border-top: 1px solid var(--color-slate-light);
+    font-size: 1.08rem;
+  }
+  .na-essential li::before {
+    content: counter(k, decimal-leading-zero);
+    font: 500 13px/1.9 "Geist Mono", ui-monospace, monospace;
+    color: var(--color-accent);
+  }
+  .na-why {
+    margin-top: 1.75rem;
+    padding: 1.4rem 1.5rem;
+    border: 1px solid var(--color-accent-soft);
+    border-radius: 1rem;
+    background: #f1f6fc;
+  }
+  .na-why h2 {
+    color: var(--color-slate);
+  }
+  .na-why p {
+    font-size: 1.15rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .na-body {
+    margin-top: 1.75rem;
+  }
+  .na-src {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+  .na-src a {
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+  .na-src a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .na-pager {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 3.5rem;
+  }
+  .na-pager a {
+    display: grid;
+    gap: 6px;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--color-slate-light);
+    border-radius: 1rem;
+    background: #fff;
+    transition: border-color 0.2s ease, transform 0.25s var(--ease);
+  }
+  .na-pager a:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+  }
+  .na-pager .na-next {
+    text-align: right;
+  }
+  .na-pager small {
+    font: 500 11px "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+  .na-pager b {
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  .na-keys {
+    margin-top: 1rem;
+    text-align: center;
+    font: 11px "Geist Mono", ui-monospace, monospace;
+    color: #6b7280;
+  }
+  @media (hover: none) {
+    .na-keys {
+      display: none;
+    }
+  }
+
+  @keyframes na-up {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+  }
+  .na-in {
+    animation: na-up 0.6s var(--ease) both;
+  }
+  .na-essential { animation-delay: 0.12s; }
+  .na-why { animation-delay: 0.2s; }
+  .na-body, .na-src { animation-delay: 0.26s; }
+
+  @media (max-width: 560px) {
+    .na {
+      margin-top: -2rem;
+    }
+    .na-pager {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .na-pager .na-next {
+      text-align: left;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .na-in {
+      animation: none;
+    }
+    .na-back,
+    .na-pager a {
+      transition: none;
+    }
+  }
+</style>
