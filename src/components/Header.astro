@@ -17,46 +17,363 @@ const navItems = [
 ];
 
 const current = splitLocale(Astro.url.pathname).rest.replace(/\/$/, "") || "/";
+const isActive = (p: string) => (p === "/" ? current === "/" : current.startsWith(p));
 ---
 
-<header class="border-b border-slate-light">
-  <div
-    class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5"
-  >
-    <a
-      href={localePath(lang)}
-      class="whitespace-nowrap text-sm font-semibold tracking-tight text-ink"
-    >
-      audit-hq<span class="text-accent">.dev</span>
+<header class="hdr" data-header transition:name="site-header">
+  <div class="hdr-bar">
+    <a href={localePath(lang)} class="hdr-logo" aria-label={t(lang, "nav.home.label")}>
+      <svg class="hdr-mark" viewBox="0 0 28 28" aria-hidden="true">
+        <path class="s1" d="M14 3 L25 8 L14 13 L3 8 Z" fill="#fff" stroke="#9DB6D6" stroke-width="1.4" stroke-linejoin="round"></path>
+        <path class="s2" d="M14 9.5 L25 14.5 L14 19.5 L3 14.5 Z" fill="#DCE8F5" stroke="#1D4E89" stroke-width="1.6" stroke-linejoin="round"></path>
+        <path class="s3" d="M14 16 L25 21 L14 26 L3 21 Z" fill="#fff" stroke="#9DB6D6" stroke-width="1.4" stroke-linejoin="round"></path>
+      </svg>
+      <span>audit<span class="hdr-accent">-hq</span></span>
     </a>
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-      <nav aria-label={t(lang, "nav.label")}>
-        <ul class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-          {
-            navItems.map((item) => {
-              const isActive =
-                item.path === "/"
-                  ? current === "/"
-                  : current.startsWith(item.path);
-              return (
-                <li>
-                  <a
-                    href={localePath(lang, item.path)}
-                    aria-current={isActive ? "page" : undefined}
-                    class:list={[
-                      "transition-colors hover:text-accent",
-                      isActive ? "text-accent font-medium" : "text-slate",
-                    ]}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              );
-            })
-          }
-        </ul>
-      </nav>
+
+    <nav aria-label={t(lang, "nav.label")} class="hdr-nav">
+      <ul class="hdr-links" data-links>
+        <li class="hdr-ind" aria-hidden="true"></li>
+        {
+          navItems.map((item) => (
+            <li>
+              <a href={localePath(lang, item.path)} aria-current={isActive(item.path) ? "page" : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="hdr-right">
+      {paths && <div class="hdr-lang"><LanguageSwitcher lang={lang} paths={paths} /></div>}
+      <a href={localePath(lang, "/labo")} class="hdr-cta" aria-label={t(lang, "nav.play.label")}>
+        <i aria-hidden="true"></i>{t(lang, "nav.play")}
+      </a>
+      <button type="button" class="hdr-menu" data-menu aria-expanded="false" aria-controls="hdr-sheet" aria-label={t(lang, "nav.menu")}>
+        <span></span>
+      </button>
+    </div>
+  </div>
+
+  <div class="hdr-sheet" id="hdr-sheet" data-sheet hidden>
+    <nav aria-label={t(lang, "nav.label")}>
+      <ul>
+        {
+          navItems.map((item, i) => (
+            <li style={`--i:${i}`}>
+              <a href={localePath(lang, item.path)} aria-current={isActive(item.path) ? "page" : undefined}>
+                {item.label} <small aria-hidden="true">{String(i + 1).padStart(2, "0")}</small>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <div class="hdr-sheet-foot">
       {paths && <LanguageSwitcher lang={lang} paths={paths} />}
+      <a href={localePath(lang, "/labo")} class="hdr-cta hdr-cta--sheet"><i aria-hidden="true"></i>{t(lang, "nav.play.label")}</a>
     </div>
   </div>
 </header>
+
+<script>
+  import "../scripts/header";
+</script>
+
+<style>
+  .hdr {
+    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    padding: 14px 16px 0;
+    pointer-events: none;
+  }
+  .hdr-bar {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 8px 8px 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    pointer-events: auto;
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      box-shadow 0.35s ease,
+      max-width 0.5s var(--ease);
+  }
+  /* Pendant une partie du Labo, l'en-tête ne colle pas : la console occupe tout l'écran. */
+  :global(body:has([data-labo-game]:not([hidden]))) .hdr {
+    position: relative;
+  }
+  /* Au défilement : l'îlot se resserre et passe en verre dépoli. */
+  .hdr[data-scrolled] .hdr-bar {
+    max-width: 880px;
+    background: rgb(255 255 255 / 0.8);
+    border-color: rgb(229 231 235 / 0.9);
+    box-shadow: 0 10px 30px -18px rgb(10 10 10 / 0.35);
+    -webkit-backdrop-filter: saturate(1.6) blur(14px);
+    backdrop-filter: saturate(1.6) blur(14px);
+  }
+
+  .hdr-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--color-ink);
+    white-space: nowrap;
+    border-radius: 8px;
+  }
+  .hdr-accent {
+    color: var(--color-accent);
+  }
+  .hdr-mark {
+    width: 28px;
+    height: 28px;
+    flex: none;
+    overflow: visible;
+  }
+  .hdr-mark path {
+    transition: transform 0.5s var(--ease);
+  }
+  .hdr-logo:hover .s1,
+  .hdr-logo:focus-visible .s1 {
+    transform: translateY(-3px);
+  }
+  .hdr-logo:hover .s3,
+  .hdr-logo:focus-visible .s3 {
+    transform: translateY(3px);
+  }
+
+  .hdr-links {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .hdr-links a {
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+    display: block;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-size: 14px;
+    color: var(--color-slate);
+    transition: color 0.25s ease, background-color 0.25s ease;
+  }
+  .hdr-links a:hover {
+    color: var(--color-ink);
+  }
+  .hdr-links a[aria-current] {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+  /* Sans JS (ou avant), le lien actif porte lui-même le fond ; ensuite l'indicateur glissant prend le relais. */
+  .hdr-links:not([data-ready]) a[aria-current] {
+    background: var(--color-accent-soft);
+  }
+  .hdr-links a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+  .hdr-ind {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 0;
+    width: 0;
+    height: 100%;
+    border-radius: 999px;
+    background: var(--color-accent-soft);
+    opacity: 0;
+  }
+  .hdr-links[data-ready] .hdr-ind {
+    opacity: 1;
+  }
+  .hdr-links[data-animate] .hdr-ind {
+    transition: transform 0.45s var(--ease), width 0.45s var(--ease), background-color 0.25s ease;
+  }
+  .hdr-links[data-hover] .hdr-ind {
+    background: #e8eef6;
+  }
+
+  .hdr-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .hdr-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+  }
+  .hdr-cta:hover {
+    background: var(--color-accent);
+  }
+  .hdr-cta:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  .hdr-cta i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #47cd89;
+    box-shadow: 0 0 0 3px rgb(71 205 137 / 0.25);
+  }
+
+  .hdr-menu {
+    display: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .hdr-menu:focus-visible {
+    outline: 2px solid var(--color-accent);
+  }
+  .hdr-menu span,
+  .hdr-menu span::before {
+    position: relative;
+    display: block;
+    width: 18px;
+    height: 1.6px;
+    border-radius: 2px;
+    background: var(--color-ink);
+    transition: transform 0.35s var(--ease);
+  }
+  .hdr-menu span {
+    transform: translateY(-3px);
+  }
+  .hdr-menu span::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+  }
+  .hdr[data-open] .hdr-menu span {
+    transform: rotate(45deg);
+  }
+  .hdr[data-open] .hdr-menu span::before {
+    transform: translateY(-6px) rotate(-90deg);
+  }
+
+  /* Menu mobile plein écran */
+  .hdr-sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: grid;
+    align-content: start;
+    gap: 1.75rem;
+    padding: 96px 28px 32px;
+    background: var(--color-paper);
+    pointer-events: auto;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    overflow-y: auto;
+  }
+  .hdr-sheet[hidden] {
+    display: none;
+  }
+  .hdr[data-open] .hdr-sheet {
+    opacity: 1;
+  }
+  .hdr-sheet li a {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-slate-light);
+    font-size: 34px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    color: var(--color-ink);
+    opacity: 0;
+    transform: translateY(12px);
+    transition: transform 0.5s var(--ease), opacity 0.4s ease;
+    transition-delay: calc(0.05s + var(--i) * 0.04s);
+  }
+  .hdr[data-open] .hdr-sheet li a {
+    opacity: 1;
+    transform: none;
+  }
+  .hdr-sheet li a[aria-current] {
+    color: var(--color-accent);
+  }
+  .hdr-sheet small {
+    font: 500 12px "Geist Mono", ui-monospace, monospace;
+    color: #6b7280;
+  }
+  .hdr-sheet-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  @media (max-width: 820px) {
+    .hdr-nav,
+    .hdr-lang,
+    .hdr-right > .hdr-cta {
+      display: none;
+    }
+    .hdr-menu {
+      display: grid;
+    }
+    .hdr-bar {
+      padding-left: 14px;
+    }
+    .hdr[data-scrolled] .hdr-bar {
+      max-width: 100%;
+    }
+  }
+  /* Sans JavaScript, pas de menu plein écran : les liens défilent horizontalement. */
+  @media (max-width: 820px) and (scripting: none) {
+    .hdr-bar {
+      flex-wrap: wrap;
+      border-radius: 1.25rem;
+    }
+    .hdr-menu {
+      display: none;
+    }
+    .hdr-nav {
+      display: block;
+      order: 3;
+      width: 100%;
+      overflow-x: auto;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hdr-bar,
+    .hdr-mark path,
+    .hdr-links[data-animate] .hdr-ind,
+    .hdr-sheet,
+    .hdr-sheet li a,
+    .hdr-menu span,
+    .hdr-menu span::before {
+      transition: none;
+    }
+  }
+</style>

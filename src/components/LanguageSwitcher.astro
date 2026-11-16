@@ -9,22 +9,12 @@ interface Props {
 const { lang, paths } = Astro.props;
 ---
 
-<nav aria-label={t(lang, "lang.label")} class="text-sm">
-  <ul class="flex gap-3">
+<nav aria-label={t(lang, "lang.label")} class="lang-switch" data-active={locales.indexOf(lang)}>
+  <ul>
     {
       locales.map((l) => (
         <li>
-          <a
-            href={localePath(l, paths[l])}
-            hreflang={l}
-            lang={l}
-            title={t(l, `lang.${l}.full`)}
-            aria-current={l === lang ? "true" : undefined}
-            class:list={[
-              "transition-colors hover:text-accent",
-              l === lang ? "font-medium text-accent" : "text-slate",
-            ]}
-          >
+          <a href={localePath(l, paths[l])} hreflang={l} lang={l} title={t(l, `lang.${l}.full`)} aria-current={l === lang ? "true" : undefined}>
             {t(l, `lang.${l}`)}
           </a>
         </li>
@@ -32,3 +22,45 @@ const { lang, paths } = Astro.props;
     }
   </ul>
 </nav>
+
+<style>
+  /* Interrupteur FR | EN : un curseur blanc posé sous la langue active. */
+  .lang-switch ul {
+    position: relative;
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: #eef1f5;
+    font: 500 12px/1 "Geist Mono", ui-monospace, monospace;
+  }
+  .lang-switch ul::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgb(10 10 10 / 0.12);
+  }
+  .lang-switch[data-active="1"] ul::before {
+    transform: translateX(100%);
+  }
+  .lang-switch a {
+    position: relative;
+    display: block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    color: #6b7280;
+    transition: color 0.2s ease;
+  }
+  .lang-switch a:hover,
+  .lang-switch a[aria-current] {
+    color: var(--color-ink);
+  }
+  .lang-switch a:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+</style>

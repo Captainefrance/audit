@@ -1,6 +1,10 @@
 export const fr = {
   "nav.label": "Navigation principale",
   "nav.home": "Accueil",
+  "nav.home.label": "audit-hq, accueil",
+  "nav.play": "Jouer",
+  "nav.play.label": "Jouer au Labo SOC",
+  "nav.menu": "Menu",
   "nav.about": "À propos",
   "nav.labo": "Labo SOC",
   "home.eyebrow": "Cybersécurité · architecture du SI",

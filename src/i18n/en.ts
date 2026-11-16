@@ -3,6 +3,10 @@ import type { Dict } from "./fr";
 export const en: Dict = {
   "nav.label": "Main navigation",
   "nav.home": "Home",
+  "nav.home.label": "audit-hq, home",
+  "nav.play": "Play",
+  "nav.play.label": "Play the SOC Lab",
+  "nav.menu": "Menu",
   "nav.about": "About",
   "nav.labo": "SOC Lab",
   "home.eyebrow": "Cybersecurity · IS architecture",
