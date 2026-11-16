@@ -1,82 +1,456 @@
 ---
-import { localePath, type Lang } from "../i18n";
+import "@fontsource/geist-mono/400.css";
+import "@fontsource/geist-mono/500.css";
+import { localePath, t, type Lang } from "../i18n";
 
 interface Props {
   lang: Lang;
 }
 const { lang } = Astro.props;
 
-const categories = ["PAM", "EDR", "SIEM", "IAM", "Backup", "Réseau"];
+const layers = t(lang, "home.art.layers").split("|");
 
-const sections = [
-  {
-    href: "/comparatif",
-    title: "Comparatif d'outils",
-    text: "Une fiche par outil : à quoi il sert, le détail technique, un avis personnel et le pays d'hébergement.",
-  },
-  {
-    href: localePath(lang, "/architecture"),
-    title: "Architecture",
-    text: "Comment ces briques s'assemblent dans un système d'information : flux, dépendances, points de contrôle.",
-  },
-  {
-    href: "/souverainete",
-    title: "Souveraineté",
-    text: "Une synthèse de la juridiction et de l'hébergement des outils, pour savoir à qui appartiennent vos données.",
-  },
-];
+/* Aperçu du Labo : événements factices qui défilent dans la carte (données inertes lues par le script). */
+const feed =
+  lang === "fr"
+    ? [
+        ["08:04", "18 messages remis", "mail", ""],
+        ["08:05", "connexion · hébergeur", "identité", ""],
+        ["08:07", "session réutilisée", "alerte", "alert"],
+        ["08:09", "sessions révoquées", "contenue", "done"],
+        ["08:11", "domaine bloqué", "proxy", ""],
+      ]
+    : [
+        ["08:04", "18 messages delivered", "mail", ""],
+        ["08:05", "sign-in · hosting provider", "identity", ""],
+        ["08:07", "session replayed", "alert", "alert"],
+        ["08:09", "sessions revoked", "contained", "done"],
+        ["08:11", "domain blocked", "proxy", ""],
+      ];
+
+/* Image de repli sans JavaScript : mêmes anneaux, figés. */
+const R = 240;
+const radii = [1, 0.82, 0.64, 0.46].map((k) => k * R);
 ---
-<section class="reveal-on-scroll">
-  <p class="text-sm font-medium text-accent">audit-hq.dev</p>
-  <h1 class="mt-2 text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
-    Auditer et choisir ses outils de sécurité, en connaissance de cause
-  </h1>
-  <p class="mt-4 max-w-2xl text-slate">
-    audit-hq.dev rassemble un audit indépendant des outils qui protègent un
-    système d'information : accès privilégiés, postes, journaux, identités,
-    sauvegardes et réseau. Le but est simple : comprendre ce que chaque outil
-    fait vraiment, comment il s'intègre, et où sont hébergées vos données.
-  </p>
-  <ul class="mt-6 flex flex-wrap gap-2 text-sm">
-    {
-      categories.map((c) => (
-        <li class="rounded-full border border-slate-light px-3 py-1 text-slate">
-          {c}
-        </li>
-      ))
-    }
-  </ul>
+
+<section class="home-hero">
+  <div>
+    <p class="home-eyebrow">{t(lang, "home.eyebrow")}</p>
+    <h1 class="home-h1">
+      {t(lang, "home.h1.before")}<em>{t(lang, "home.h1.em")}</em>{t(lang, "home.h1.after")}
+    </h1>
+    <p class="home-sub">{t(lang, "home.sub")}</p>
+    <div class="home-ctas">
+      <a class="home-btn" href={localePath(lang, "/labo")}>
+        {t(lang, "home.cta.labo")} <span class="home-arr" aria-hidden="true">→</span>
+      </a>
+      <a class="home-btn home-btn--ghost" href={localePath(lang, "/architecture")}>
+        {t(lang, "home.cta.arch")}
+      </a>
+    </div>
+  </div>
+
+  <figure class="home-art" data-home-rings>
+    <canvas
+      role="img"
+      aria-label={t(lang, "home.art.label")}
+      data-layers={layers.join("|")}
+      data-core={t(lang, "home.art.core")}
+      data-lang={lang}></canvas>
+    <svg class="home-art-static" viewBox="0 0 600 540" role="img" aria-label={t(lang, "home.art.label")}>
+      <circle cx="300" cy="270" r={R * 0.6} fill="#dce8f5" opacity="0.5"></circle>
+      {
+        radii.map((r) => (
+          <circle cx="300" cy="270" r={r} fill="none" stroke="#9db6d6" stroke-dasharray="2 9" stroke-width="1.6" />
+        ))
+      }
+      <circle cx="300" cy="270" r={R * 0.27} fill="#fff" stroke="#1d4e89" stroke-width="1.5"></circle>
+      <text x="300" y="275" text-anchor="middle" class="home-art-core">{t(lang, "home.art.core")}</text>
+      {
+        radii.map((r, i) => (
+          <text x="300" y={270 - r + 4} text-anchor="middle" class="home-art-lbl">
+            {layers[i]}
+          </text>
+        ))
+      }
+    </svg>
+    <figcaption class="home-cap" aria-hidden="true">
+      <b data-home-count>1 284</b>{" "}{t(lang, "home.art.cap")}
+    </figcaption>
+  </figure>
 </section>
 
-<section class="reveal-on-scroll mt-16">
-  <h2 class="text-2xl font-semibold tracking-tight text-ink">
-    Ce que vous trouverez ici
-  </h2>
-  <ul class="mt-6 grid gap-4 sm:grid-cols-3">
-    {
-      sections.map((s) => (
-        <li>
-          <a
-            href={s.href}
-            class="block h-full rounded-lg border border-slate-light p-5 transition-colors hover:border-accent"
-          >
-            <h3 class="font-semibold text-ink">{s.title}</h3>
-            <p class="mt-2 text-sm text-slate">{s.text}</p>
-          </a>
-        </li>
-      ))
-    }
-  </ul>
+<section class="home-doors reveal-on-scroll" aria-label={t(lang, "home.doors")}>
+  <a class="home-door home-door--primary" href={localePath(lang, "/labo")}>
+    <div class="home-door-art">
+      <div class="home-feed" data-home-feed aria-hidden="true">
+        {
+          feed
+            .slice(0, 4)
+            .reverse()
+            .map(([time, text, badge, kind]) => (
+              <div class={kind ? `row ${kind}` : "row"}>
+                <span class="t">{time}</span>
+                <span>{text}</span>
+                <span class="badge">{badge}</span>
+              </div>
+            ))
+        }
+      </div>
+      <script type="application/json" data-home-feed-data set:html={JSON.stringify(feed)} />
+    </div>
+    <div class="home-door-txt">
+      <h2>{t(lang, "nav.labo")}</h2>
+      <p>{t(lang, "home.labo.text")}</p>
+      <span class="home-go">{t(lang, "home.labo.go")} <span aria-hidden="true">→</span></span>
+    </div>
+  </a>
+  <a class="home-door" href={localePath(lang, "/architecture")}>
+    <div class="home-door-art">
+      <svg class="home-mini-stack" viewBox="0 0 200 150" aria-hidden="true">
+        <g class="m1"><path d="M100 10 L180 40 L100 70 L20 40 Z" fill="#fff" stroke="#9DB6D6"></path></g>
+        <g class="m2">
+          <path d="M100 45 L180 75 L100 105 L20 75 Z" fill="#fff" stroke="#4F7FBF" stroke-width="1.5"></path>
+          <circle cx="100" cy="75" r="4" fill="#1D4E89"></circle>
+        </g>
+        <g class="m3"><path d="M100 80 L180 110 L100 140 L20 110 Z" fill="#fff" stroke="#9DB6D6"></path></g>
+      </svg>
+    </div>
+    <div class="home-door-txt">
+      <h2>{t(lang, "architecture.title")}</h2>
+      <p>{t(lang, "home.arch.text")}</p>
+      <span class="home-go">{t(lang, "home.arch.go")} <span aria-hidden="true">→</span></span>
+    </div>
+  </a>
+  <a class="home-door" href={localePath(lang, "/news")}>
+    <div class="home-door-art">
+      <div class="home-lines" aria-hidden="true">
+        <div><b style="width:82%"></b><i>IAM</i></div>
+        <div><b style="width:64%"></b><i>EDR</i></div>
+        <div><b style="width:73%"></b><i>cloud</i></div>
+      </div>
+    </div>
+    <div class="home-door-txt">
+      <h2>{t(lang, "news.title")}</h2>
+      <p>{t(lang, "home.news.text")}</p>
+      <span class="home-go">{t(lang, "home.news.go")} <span aria-hidden="true">→</span></span>
+    </div>
+  </a>
 </section>
 
-<section class="reveal-on-scroll mt-16">
-  <h2 class="text-2xl font-semibold tracking-tight text-ink">
-    Pourquoi ce site
-  </h2>
-  <p class="mt-4 max-w-2xl text-slate">
-    Les catalogues d'éditeurs vantent tous la même chose. Ici, chaque outil
-    est évalué sur des critères explicites et comparables, avec un avis
-    assumé. La souveraineté numérique est traitée comme un critère à part
-    entière, au même titre que la fonctionnalité ou le coût.
-  </p>
+<section class="home-me reveal-on-scroll">
+  <p><b>{t(lang, "home.me.strong")}</b> {t(lang, "home.me.text")}</p>
+  <a href={localePath(lang, "/a-propos")}>{t(lang, "nav.about")} <span aria-hidden="true">→</span></a>
 </section>
+
+<script>
+  import "../scripts/home-hero";
+</script>
+
+<style>
+  .home-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+    gap: 2rem;
+    align-items: center;
+    margin-top: -1.5rem;
+  }
+  .home-eyebrow {
+    font: 500 0.78rem/1 "Geist Mono", ui-monospace, monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-accent);
+  }
+  .home-h1 {
+    margin-top: 1.1rem;
+    font-size: clamp(2.5rem, 5.4vw, 4.2rem);
+    line-height: 1.02;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    text-wrap: balance;
+  }
+  .home-h1 em {
+    font-style: normal;
+    color: var(--color-accent);
+  }
+  .home-sub {
+    margin-top: 1.4rem;
+    max-width: 34ch;
+    font-size: 1.125rem;
+    color: var(--color-slate);
+  }
+  .home-ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .home-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.8rem 1.25rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-ink);
+    background: var(--color-ink);
+    color: var(--color-paper);
+    font-weight: 500;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  }
+  .home-btn:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    transform: translateY(-1px);
+  }
+  .home-arr {
+    transition: transform 0.2s ease;
+  }
+  .home-btn:hover .home-arr {
+    transform: translateX(3px);
+  }
+  .home-btn--ghost {
+    background: transparent;
+    color: var(--color-ink);
+    border-color: var(--color-slate-light);
+  }
+  .home-btn--ghost:hover {
+    background: transparent;
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .home-art {
+    margin: 0;
+  }
+  .home-art canvas,
+  .home-art-static {
+    display: block;
+    width: 100%;
+    aspect-ratio: 600 / 540;
+  }
+  .home-art-static {
+    display: none;
+  }
+  .home-art-core {
+    font: 600 15px "Geist Sans", system-ui, sans-serif;
+    fill: var(--color-accent);
+  }
+  .home-art-lbl {
+    font: 500 11px "Geist Mono", ui-monospace, monospace;
+    fill: var(--color-slate);
+    paint-order: stroke;
+    stroke: var(--color-paper);
+    stroke-width: 8px;
+  }
+  .home-cap {
+    margin-top: 0.25rem;
+    text-align: center;
+    font: 12px/1.4 "Geist Mono", ui-monospace, monospace;
+    color: #6b7280;
+  }
+  .home-cap b {
+    color: var(--color-ink);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  @media (scripting: none) {
+    .home-art canvas,
+    .home-cap {
+      display: none;
+    }
+    .home-art-static {
+      display: block;
+    }
+  }
+
+  .home-doors {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 4rem;
+  }
+  .home-door {
+    display: grid;
+    grid-template-rows: 170px auto;
+    overflow: hidden;
+    border: 1px solid var(--color-slate-light);
+    border-radius: 1.25rem;
+    background: #fff;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .home-door:hover {
+    transform: translateY(-3px);
+    border-color: #d3dfee;
+    box-shadow: 0 18px 40px -24px rgb(10 10 10 / 0.35);
+  }
+  .home-door-art {
+    position: relative;
+    overflow: hidden;
+    background: #f1f6fc;
+    border-bottom: 1px solid var(--color-slate-light);
+  }
+  .home-door--primary .home-door-art {
+    background: #0f1b2d;
+  }
+  .home-door-txt {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.25rem 1.4rem 1.4rem;
+  }
+  .home-door-txt h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .home-door-txt p {
+    font-size: 0.95rem;
+    color: var(--color-slate);
+  }
+  .home-go {
+    margin-top: 0.35rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  .home-feed {
+    position: absolute;
+    inset: 18px 18px auto;
+    display: grid;
+    gap: 8px;
+  }
+  .home-feed :global(.row) {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 7px 10px;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.05);
+    font: 12px "Geist Mono", ui-monospace, monospace;
+    color: #c9d7ea;
+    white-space: nowrap;
+  }
+  .home-feed :global(.row > span:nth-child(2)) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .home-feed :global(.t) {
+    color: #7f93b0;
+  }
+  .home-feed :global(.badge) {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.08);
+    font-size: 10px;
+    color: #9fb2cc;
+  }
+  .home-feed :global(.row.alert) {
+    border-color: rgb(244 112 102 / 0.55);
+    color: #ffdad6;
+  }
+  .home-feed :global(.row.alert .badge) {
+    background: #f47066;
+    color: #2a0b08;
+  }
+  .home-feed :global(.row.done .badge) {
+    background: #47cd89;
+    color: #072414;
+  }
+
+  .home-mini-stack {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 190px;
+    transform: translate(-50%, -46%);
+  }
+  .home-mini-stack g {
+    transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .home-door:hover .m1 {
+    transform: translateY(-10px);
+  }
+  .home-door:hover .m3 {
+    transform: translateY(10px);
+  }
+
+  .home-lines {
+    position: absolute;
+    inset: 22px 22px auto;
+    display: grid;
+    gap: 10px;
+  }
+  .home-lines div {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 12px;
+    border: 1px solid var(--color-slate-light);
+    border-radius: 10px;
+    background: #fff;
+  }
+  .home-lines b {
+    display: block;
+    height: 7px;
+    border-radius: 4px;
+    background: #d9e2ee;
+  }
+  .home-lines i {
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: var(--color-accent-soft);
+    font: normal 10px "Geist Mono", ui-monospace, monospace;
+    color: var(--color-accent);
+  }
+
+  .home-me {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 4rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--color-slate-light);
+  }
+  .home-me p {
+    max-width: 52ch;
+    font-size: 1.15rem;
+    color: var(--color-slate);
+  }
+  .home-me b {
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+  .home-me a {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-accent);
+  }
+
+  @media (max-width: 860px) {
+    .home-hero {
+      grid-template-columns: minmax(0, 1fr);
+      margin-top: -2rem;
+    }
+    .home-art {
+      width: 100%;
+      max-width: 520px;
+      margin-inline: auto;
+    }
+    .home-doors {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .home-btn,
+    .home-arr,
+    .home-door,
+    .home-mini-stack g {
+      transition: none;
+    }
+  }
+</style>

@@ -6,7 +6,7 @@ import type { Lang } from "./index";
  * Traduire une page : ajouter "en" ici et fournir le contenu EN dans la page.
  */
 export const pageTranslations = {
-  home: ["fr"],
+  home: ["fr", "en"],
   about: ["fr"],
   news: ["fr", "en"],
   labo: ["fr", "en"],
